@@ -51,6 +51,12 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
               >
                 Contact
               </Link>
+              <Link 
+                to="/comments-demo" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-purple-400 hover:text-white hover:bg-gray-700' : 'text-purple-700 hover:text-gray-900 hover:bg-gray-100'}`}
+              >
+                Comments Demo
+              </Link>
               {isLoggedIn && (
                 <Link 
                   to="/edit-profile" 

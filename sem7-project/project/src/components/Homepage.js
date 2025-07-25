@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import CommentsSection from './CommentsSection';
 import axios from 'axios';
 
 const creators = [
@@ -173,6 +174,19 @@ const Homepage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Comments Section Example */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className={`rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Community Discussion
+          </h2>
+          <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Share your thoughts about our healthcare platform and connect with other users.
+          </p>
+          <CommentsSection postId="homepage-discussion" title="Discussion" />
         </div>
       </div>
 

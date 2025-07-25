@@ -6,6 +6,8 @@ import AboutPage from './components/AboutPage';
 import LoginPage from './components/LoginPage';
 import EditProfile from './components/EditProfile';
 import NotificationsPage from './components/NotificationsPage';
+import CommentsDemo from './components/CommentsDemo';
+import './components/comments.css';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -47,6 +49,7 @@ function App() {
         <Route path="/login" element={<LoginPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} login={login} />} />
         <Route path="/edit-profile" element={isLoggedIn ? <EditProfile isDarkMode={isDarkMode} toggleTheme={toggleTheme} /> : <Navigate to="/login" replace />} />
         <Route path="/notifications" element={<NotificationsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />} />
+        <Route path="/comments-demo" element={<CommentsDemo isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />} />
       </Routes>
     </div>
   );

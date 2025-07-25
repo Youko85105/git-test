@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import CommentsSection from './CommentsSection';
 
 const FactsPage = ({ isDarkMode, toggleTheme }) => {
   const [subscribedCreators, setSubscribedCreators] = useState([]);
@@ -223,6 +224,19 @@ const FactsPage = ({ isDarkMode, toggleTheme }) => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Comments Section for Facts Discussion */}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className={`rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Discuss Health Facts
+          </h2>
+          <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Share your thoughts and ask questions about the health facts you've learned.
+          </p>
+          <CommentsSection postId="facts-discussion" title="Health Facts Discussion" />
         </div>
       </div>
 
