@@ -16,9 +16,32 @@ const mockUser = {
   name: 'Current User'
 };
 
+// Mock comments for demo when backend is not available
+const mockComments = [
+  {
+    _id: 'comment1',
+    message: 'This is a sample comment to show how the nested comment system works!',
+    user: { _id: 'user1', name: 'John Doe' },
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    likeCount: 3,
+    likedByMe: false,
+    parentId: null
+  },
+  {
+    _id: 'comment2',
+    message: 'This is a reply to the first comment. You can nest comments infinitely!',
+    user: { _id: 'user2', name: 'Jane Smith' },
+    createdAt: new Date(Date.now() - 1800000).toISOString(),
+    likeCount: 1,
+    likedByMe: true,
+    parentId: 'comment1'
+  }
+];
+
 export default function CommentsSection({ postId, title = "Comments" }) {
   const [comments, setComments] = useState([]);
   const [currentUser] = useState(mockUser); // In real app, get from auth context
+  const [isUsingMockData, setIsUsingMockData] = useState(false);
   
   const createCommentFn = useAsyncFn(createComment);
   const updateCommentFn = useAsyncFn(updateComment);
@@ -54,6 +77,15 @@ export default function CommentsSection({ postId, title = "Comments" }) {
         })
         .catch(error => {
           console.error('Failed to load comments:', error);
+          // Fall back to mock comments for demo purposes
+          setIsUsingMockData(true);
+          setComments(
+            mockComments.map(comment => ({
+              ...comment,
+              id: comment._id,
+              parentId: comment.parentId || null,
+            }))
+          );
         });
     }
   }, [postId]);
@@ -107,6 +139,19 @@ export default function CommentsSection({ postId, title = "Comments" }) {
       user: currentUser,
     }).then(comment => {
       createLocalComment(comment);
+    }).catch(error => {
+      // If API fails, create a mock comment for demo
+      const mockComment = {
+        _id: 'mock_' + Date.now(),
+        message,
+        user: currentUser,
+        createdAt: new Date().toISOString(),
+        likeCount: 0,
+        likedByMe: false,
+        parentId: null
+      };
+      createLocalComment(mockComment);
+      throw error; // Still throw error to show user the API issue
     });
   }
 
@@ -163,6 +208,20 @@ export default function CommentsSection({ postId, title = "Comments" }) {
   return (
     <div className="comments-section">
       <h3 className="comments-title">{title} ({comments.length})</h3>
+      
+      {isUsingMockData && (
+        <div className="api-warning" style={{ 
+          background: '#fef3cd', 
+          border: '1px solid #fdd835', 
+          borderRadius: '4px', 
+          padding: '12px', 
+          marginBottom: '16px',
+          color: '#8b5a00'
+        }}>
+          <strong>Demo Mode:</strong> Backend API not available. Showing sample comments. 
+          To enable full functionality, start the backend server: <code>cd nested-comments/server && npm start</code>
+        </div>
+      )}
       
       <div className="comment-form-section">
         <CommentForm

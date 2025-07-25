@@ -29,7 +29,7 @@ export default function CommentForm({
           {loading ? "Loading" : "Post"}
         </button>
       </div>
-      {error && <div className="error-msg">{error}</div>}
+      {error && <div className="error-msg">{typeof error === 'string' ? error : error.message || 'An error occurred'}</div>}
     </form>
   );
 }

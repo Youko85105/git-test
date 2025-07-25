@@ -31,6 +31,10 @@ export async function makeRequest(endpoint, options = {}) {
     
     return await response.json();
   } catch (error) {
+    // Provide more specific error messages
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error('Unable to connect to server. Please make sure the backend API is running on http://localhost:3001');
+    }
     throw new Error(error.message || 'Network request failed');
   }
 }
