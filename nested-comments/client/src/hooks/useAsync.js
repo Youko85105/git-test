@@ -28,7 +28,11 @@ function useAsyncInternal(func, dependencies, initialLoading = false) {
         return data
       })
       .catch(error => {
-        setError(error)
+        // Convert error to string to prevent React rendering issues
+        const errorMessage = error instanceof Error ? error.message : 
+                           typeof error === 'string' ? error : 
+                           'An unknown error occurred'
+        setError(errorMessage)
         setValue(undefined)
         return Promise.reject(error)
       })
