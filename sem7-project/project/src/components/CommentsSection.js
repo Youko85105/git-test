@@ -12,7 +12,7 @@ import {
 
 // Mock user for now - in a real app, this would come from auth context
 const mockUser = {
-  _id: 'user123',
+  _id: '6881ceabc50a8272ca0734e2',
   name: 'Current User'
 };
 

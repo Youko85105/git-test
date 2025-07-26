@@ -6,19 +6,19 @@ import CommentsSection from './CommentsSection';
 const CommentsDemo = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
   const demoSections = [
     {
-      id: 'blog-post-1',
+      id: '68767ba7be893e1294e162a2',
       title: 'The Future of Healthcare Technology',
       content: 'Artificial intelligence and machine learning are revolutionizing healthcare delivery, from diagnostic imaging to personalized treatment plans. This technology promises to make healthcare more accurate, efficient, and accessible to everyone.',
       type: 'Blog Post'
     },
     {
-      id: 'news-article-1',
+      id: '68767ba7be893e1294e162a2',
       title: 'New Research on Mental Health',
       content: 'Recent studies show that regular exercise and social connections play crucial roles in maintaining good mental health. Researchers recommend at least 30 minutes of physical activity daily.',
       type: 'News Article'
     },
     {
-      id: 'community-topic-1',
+      id: '68767ba7be893e1294e162a2',
       title: 'Healthy Living Tips',
       content: 'Share your best tips for maintaining a healthy lifestyle. What works for you? What challenges do you face?',
       type: 'Community Discussion'
@@ -131,7 +131,7 @@ const CommentsDemo = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
             <div>
               <h3 className="font-semibold mb-2">2. Add it to any page or component:</h3>
               <code className={`block p-3 rounded ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} text-sm`}>
-                {`<CommentsSection postId="unique-post-id" title="Comments" />`}
+                {`<CommentsSection postId="68767ba7be893e1294e162a2" title="Comments" />`}
               </code>
             </div>
             <div>

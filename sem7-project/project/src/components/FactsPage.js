@@ -236,7 +236,7 @@ const FactsPage = ({ isDarkMode, toggleTheme }) => {
           <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             Share your thoughts and ask questions about the health facts you've learned.
           </p>
-          <CommentsSection postId="facts-discussion" title="Health Facts Discussion" />
+          <CommentsSection postId="68767ba7be893e1294e162a2" title="Health Facts Discussion" />
         </div>
       </div>
 
