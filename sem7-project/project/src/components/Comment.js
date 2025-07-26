@@ -11,6 +11,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 
 export default function Comment({
   id,
+  postId,
   message,
   user,
   createdAt,
@@ -29,14 +30,14 @@ export default function Comment({
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
-  const childComments = getReplies ? getReplies(id) : [];
+  const childComments = getReplies(id);
   const commentOwnerId = user?.id || user?._id;
   const deleted = !message;
 
   function onCommentReply(message) {
     if (!currentUser) return;
     return onReply({
-      postId: parentId,
+      postId,
       message,
       parentId: id,
       user: currentUser,
@@ -160,8 +161,9 @@ export default function Comment({
               onClick={() => setAreChildrenHidden(true)}
             />
             <div className="nested-comments">
-              <CommentList 
+              <CommentList
                 comments={childComments}
+                postId={postId}
                 onReply={onReply}
                 onUpdate={onUpdate}
                 onDelete={onDelete}

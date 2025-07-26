@@ -59,7 +59,7 @@ export default function CommentsSection({ postId, title = "Comments" }) {
   }, [postId]);
 
   function getReplies(parentId) {
-    return commentsByParentId[parentId];
+    return commentsByParentId[parentId] || [];
   }
 
   function createLocalComment(comment) {
@@ -176,6 +176,7 @@ export default function CommentsSection({ postId, title = "Comments" }) {
         <div className="comments-list">
           <CommentList
             comments={rootComments}
+            postId={postId}
             onReply={onCommentReply}
             onUpdate={onCommentUpdate}
             onDelete={onCommentDelete}
