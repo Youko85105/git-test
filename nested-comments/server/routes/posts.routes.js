@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Post = require('../models/post.model');
-const Comment = require('../models/comment.model') // make sure this is at the top
+const Comment = require('../models/comment.model');
+const Like = require('../models/like.model');
 
 // POST /api/posts - Create a post
 router.post('/', async (req, res) => {
@@ -40,9 +41,7 @@ router.get('/:id', async (req, res) => {
       .sort({ createdAt: 1 })
       .populate("user", "name")
 
-    const Like = require('../models/like.model') // ✅ Add this at top
-
-const userId = req.user?._id
+    const userId = req.user?._id
  // ✅ Get userId from client (or from auth middleware if used)
 
 const formattedComments = await Promise.all(

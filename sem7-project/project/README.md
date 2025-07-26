@@ -1,4 +1,4 @@
-# Healthcare Facts Applicationn
+# Healthcare Facts Application
 
 A modern React application featuring a facts page with medical experts, photos, and subscription functionality.
 

@@ -136,7 +136,7 @@ const CommentsDemo = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
             </div>
             <div>
               <h3 className="font-semibold mb-2">3. Make sure your backend API is running:</h3>
-              <p>The comment system requires a backend API server. Make sure your API is running on the configured URL (default: http://localhost:3001/api).</p>
+              <p>The comment system requires a backend API server. Make sure your API is running on the configured URL (default: http://localhost:3002/api).</p>
             </div>
           </div>
         </div>

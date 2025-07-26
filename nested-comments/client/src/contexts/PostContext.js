@@ -60,19 +60,20 @@ console.log("Grouped comments:", commentsByParentId)
   }
 
   function toggleLocalCommentLike(id, addLike) {
-  setComments(prevComments => {
-    return prevComments.map(comment => {
-      if (id === comment._id) {
-        const currentCount = comment.likeCount || 0
-        return {
-          ...comment,
-          likeCount: addLike ? currentCount + 1 : Math.max(currentCount - 1, 0),
-          likedByMe: addLike,
-        }
-      } else {
-        return comment
+    setComments(prevComments => updateLocalCommentLike(prevComments, id, addLike))
+  }
+
+export function updateLocalCommentLike(comments, id, addLike) {
+  return comments.map(comment => {
+    if (id === comment._id) {
+      const currentCount = comment.likeCount || 0
+      return {
+        ...comment,
+        likeCount: addLike ? currentCount + 1 : Math.max(currentCount - 1, 0),
+        likedByMe: addLike,
       }
-    })
+    }
+    return comment
   })
 }
 
