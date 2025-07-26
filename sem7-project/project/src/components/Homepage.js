@@ -186,7 +186,7 @@ const Homepage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
           <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             Share your thoughts about our healthcare platform and connect with other users.
           </p>
-          <CommentsSection postId="homepage-discussion" title="Discussion" />
+          <CommentsSection postId="68767ba7be893e1294e162a2" title="Discussion" />
         </div>
       </div>
 
