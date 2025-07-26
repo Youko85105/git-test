@@ -1,8 +1,9 @@
 import React from "react";
 import Comment from "./Comment";
 
-export default function CommentList({ 
-  comments, 
+export default function CommentList({
+  comments,
+  postId,
   onReply,
   onUpdate,
   onDelete,
@@ -15,6 +16,7 @@ export default function CommentList({
     <div key={comment._id || comment.id} className="comment-stack">
       <Comment
         id={comment._id || comment.id}
+        postId={comment.postId || postId}
         parentId={comment.parentId || null}
         message={comment.message}
         user={comment.user}

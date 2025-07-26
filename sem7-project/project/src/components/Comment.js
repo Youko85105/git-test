@@ -16,6 +16,7 @@ export default function Comment({
   createdAt,
   likeCount,
   likedByMe,
+  postId,
   parentId,
   onReply,
   onUpdate,
@@ -36,7 +37,7 @@ export default function Comment({
   function onCommentReply(message) {
     if (!currentUser) return;
     return onReply({
-      postId: parentId,
+      postId,
       message,
       parentId: id,
       user: currentUser,
@@ -160,8 +161,9 @@ export default function Comment({
               onClick={() => setAreChildrenHidden(true)}
             />
             <div className="nested-comments">
-              <CommentList 
+              <CommentList
                 comments={childComments}
+                postId={postId}
                 onReply={onReply}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
