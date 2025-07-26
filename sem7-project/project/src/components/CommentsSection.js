@@ -176,6 +176,7 @@ export default function CommentsSection({ postId, title = "Comments" }) {
         <div className="comments-list">
           <CommentList
             comments={rootComments}
+            postId={postId}
             onReply={onCommentReply}
             onUpdate={onCommentUpdate}
             onDelete={onCommentDelete}
