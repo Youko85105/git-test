@@ -93,7 +93,7 @@ Each creator card includes:
 ## API Integration
 
 The application is set up to integrate with a backend API for articles. The current configuration expects:
-- Backend running on `http://localhost:8080`
+- Backend running on `http://localhost:3002`
 - Articles endpoint: `/api/article/all`
 - Image endpoint: `/api/article/image/{imageUrl}`
 

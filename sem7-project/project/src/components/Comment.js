@@ -137,7 +137,9 @@ export default function Comment({
         )}
         
         {loading.deleteError && (
-          <div className="error-msg mt-1">{loading.deleteError}</div>
+          <div className="error-msg mt-1">
+            {loading.deleteError.message || String(loading.deleteError)}
+          </div>
         )}
       </div>
 
