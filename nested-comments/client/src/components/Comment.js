@@ -27,7 +27,7 @@ export function Comment({
   likedByMe,
   parentId
 }) {
-  const [areChildrenHidden, setAreChildrenHidden] = useState(false)
+  const [areChildrenHidden, setAreChildrenHidden] = useState(true)
   const [isReplying, setIsReplying] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const {
@@ -46,6 +46,8 @@ export function Comment({
   const { user: currentUser, loading: userLoading } = useUser()
   const commentOwnerId = user?.id || user?._id
   const deleted = !message  // ← mark if comment is deleted (message is null)
+
+  const commentClassName = `comment${deleted ? " deleted-comment" : ""}`
 
   if (userLoading) return null
 
@@ -111,7 +113,7 @@ export function Comment({
 
   return (
     <>
-      <div className="comment">
+      <div className={commentClassName}>
         <div className="header">
           <span className="name">{user?.name || "Anonymous"}</span>
           <span className="date">

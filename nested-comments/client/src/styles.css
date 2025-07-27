@@ -169,26 +169,38 @@ button {
 
 .comment {
   padding: .5rem;
+  margin-bottom: .5rem;
   border: 1px solid hsl(235, 100%, 90%);
   border-radius: .5rem;
 }
 
+.deleted-comment {
+  background-color: #f5f5f5;
+  color: #666;
+  font-style: italic;
+}
+
 .comment .header {
-  color: hsl(235, 50%, 67%);
+  color: hsl(235, 30%, 60%);
   display: flex;
   justify-content: space-between;
   margin-bottom: .25rem;
-  font-size: .75em;
+  font-size: .7em;
 }
 
 .comment .header .name {
   font-weight: bold;
 }
 
+.comment .header .date {
+  color: #999;
+}
+
 .comment .message {
   white-space: pre-wrap;
   margin-left: .5rem;
   margin-right: .5rem;
+  min-height: 2em;
 }
 
 .comment .footer {
