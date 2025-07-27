@@ -181,6 +181,11 @@ button {
   font-size: .75em;
 }
 
+.comment .header .date {
+  color: #999;
+  font-size: 0.7em;
+}
+
 .comment .header .name {
   font-weight: bold;
 }
@@ -189,6 +194,17 @@ button {
   white-space: pre-wrap;
   margin-left: .5rem;
   margin-right: .5rem;
+  min-height: 2.5em;
+}
+
+.comment.deleted {
+  background-color: #f5f5f5;
+  color: #666;
+  font-style: italic;
+}
+
+.comment.deleted .message {
+  color: inherit;
 }
 
 .comment .footer {
