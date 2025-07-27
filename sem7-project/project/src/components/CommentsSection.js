@@ -59,7 +59,7 @@ export default function CommentsSection({ postId, title = "Comments" }) {
   }, [postId]);
 
   function getReplies(parentId) {
-    return commentsByParentId[parentId];
+    return commentsByParentId[parentId] || [];
   }
 
   function createLocalComment(comment) {
