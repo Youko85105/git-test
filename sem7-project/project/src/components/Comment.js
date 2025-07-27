@@ -26,13 +26,14 @@ export default function Comment({
   currentUser,
   loading = {}
 }) {
-  const [areChildrenHidden, setAreChildrenHidden] = useState(false);
+  const [areChildrenHidden, setAreChildrenHidden] = useState(true);
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
   const childComments = getReplies ? getReplies(id) : [];
   const commentOwnerId = user?.id || user?._id;
   const deleted = !message;
+  const commentClassName = `comment${deleted ? " deleted-comment" : ""}`;
 
   function onCommentReply(message) {
     if (!currentUser) return;
@@ -72,7 +73,7 @@ export default function Comment({
 
   return (
     <>
-      <div className="comment">
+      <div className={commentClassName}>
         <div className="comment-header">
         <span className="comment-author">{user?.name || "Anonymous"}</span>
           <span className="comment-date">
