@@ -38,7 +38,7 @@ router.get('/:id', async (req, res) => {
 
     const comments = await Comment.find({ postId: post._id })
       .sort({ createdAt: 1 })
-      .populate("user", "name")
+      .populate("user", "username")
 
     const Like = require('../models/like.model') // ✅ Add this at top
 
@@ -62,7 +62,7 @@ const formattedComments = await Promise.all(
         likedByMe: !!likedByMe,
         user: {
           id: comment.user._id,
-          name: comment.user.name,
+          name: comment.user.username,
         },
       }
     })
@@ -93,14 +93,14 @@ router.post('/:postId/comments', async (req, res) => {
     });
 
     // ✅ Populate user's name
-    await comment.populate("user", "name");
+    await comment.populate("user", "username");
 
     // ✅ Send formatted comment back
     const formattedComment = {
       ...comment.toObject(),
       user: {
         id: comment.user._id,
-        name: comment.user.name,
+        name: comment.user.username,
       },
     };
 

@@ -75,7 +75,7 @@ export default function Comment({
     <>
       <div className={commentClassName}>
         <div className="comment-header">
-          <span className="comment-author">{user?.name || "Anonymous"}</span>
+        <span className="comment-author">{user?.name || "Anonymous"}</span>
           <span className="comment-date">
             {dateFormatter.format(Date.parse(createdAt))}
           </span>

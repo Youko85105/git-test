@@ -27,6 +27,8 @@ export function Comment({
   likedByMe,
   parentId
 }) {
+
+  // Hide replies by default
   const [areChildrenHidden, setAreChildrenHidden] = useState(true)
   const [isReplying, setIsReplying] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -114,6 +116,7 @@ export function Comment({
   return (
     <>
       <div className={commentClassName}>
+      <div className={`comment${deleted ? " deleted" : ""}`}>
         <div className="header">
           <span className="name">{user?.name || "Anonymous"}</span>
           <span className="date">
