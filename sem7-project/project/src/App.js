@@ -8,6 +8,10 @@ import EditProfile from './components/EditProfile';
 import NotificationsPage from './components/NotificationsPage';
 import CommentsDemo from './components/CommentsDemo';
 import './components/comments.css';
+import PostPage from './components/PostPage'; // ✅ make sure this file exists
+import PostPageWrapper from "./components/PostPageWrapper";
+import CreatorProfile from './components/CreatorProfile';
+import CreatorsPage from './components/CreatorsPage';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -50,6 +54,19 @@ function App() {
         <Route path="/edit-profile" element={isLoggedIn ? <EditProfile isDarkMode={isDarkMode} toggleTheme={toggleTheme} /> : <Navigate to="/login" replace />} />
         <Route path="/notifications" element={<NotificationsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />} />
         <Route path="/comments-demo" element={<CommentsDemo isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />} />
+        <Route
+          path="/posts/:id"
+          element={
+            <PostPageWrapper
+              isDarkMode={isDarkMode}
+              toggleTheme={toggleTheme}
+              isLoggedIn={isLoggedIn}
+              logout={logout}
+            />
+          }
+        />
+        <Route path="/creator/:id" element={<CreatorProfile isDarkMode={isDarkMode} />} />
+        <Route path="/creators" element={<CreatorsPage isDarkMode={isDarkMode} />} />
       </Routes>
     </div>
   );

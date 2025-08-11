@@ -1,0 +1,37 @@
+import { Router } from "express";
+import upload from "../middleware/UploadMiddleware.js";
+import authMiddleware from "../middleware/AuthMiddleware.js";
+import { getDashboardData, getSubscriptions, getSubscribers, updateDashboardData, upgradeToCreator, getBookMarks} from "../Private/Dashboard.js";
+import { retryStripeOnboarding, getStripeDashboardLink } from "../Util/StripeHandler.js";
+import { uploadToCloudinary } from "../Util/CloudinaryUpload.js";
+import { subscribeToCreator } from "../Private/Subscribing.js";
+import { createPost, deletePost, editPost, getAllPosts, likePost } from "../Private/Posting.js";
+import commentRoutes from '../routes/comments.routes.js';
+import likeRoutes from '../routes/likes.routes.js';
+import { getPostWithComments } from "../Private/Posting.js";
+
+
+const router = Router();
+
+router.get("/creator/subscribed", authMiddleware, getSubscriptions);
+router.get("/subscriber", authMiddleware, getSubscribers);
+router.get("/bookmarks", authMiddleware, getBookMarks);
+router.get("/dashboard", authMiddleware, getDashboardData);
+router.patch("/dashboard", authMiddleware, upload.single('profilePic'), uploadToCloudinary, updateDashboardData);
+router.patch("/upgrade", authMiddleware, upload.none(), upgradeToCreator)
+router.get("/stripe/onboarding", authMiddleware, retryStripeOnboarding);
+router.get("/stripe/dashboard", authMiddleware, getStripeDashboardLink);
+router.post("/subscribe/:creatorId", authMiddleware, subscribeToCreator );
+router.post("/post",authMiddleware,upload.array('attachments',3), uploadToCloudinary, createPost);
+router.get("/post",authMiddleware, getAllPosts);
+router.get("/post/:postId", authMiddleware, getPostWithComments);
+router.get("/post/:creatorId",authMiddleware, getAllPosts);
+router.patch("/post/:postId", authMiddleware, upload.array('attachments',3), uploadToCloudinary, editPost);
+router.delete("/post/:postId", authMiddleware, deletePost);
+router.delete("/post/:postId", authMiddleware, likePost);
+router.use('/comment', authMiddleware, commentRoutes);  // ✅ protected comment routes
+router.use('/like', authMiddleware, likeRoutes);
+
+
+
+export default router;

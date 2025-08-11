@@ -1,30 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
-
-const notifications = [
-  {
-    id: 1,
-    title: 'New Follower',
-    message: 'Alex Smith started following you.',
-    time: '2 minutes ago',
-    type: 'follow',
-  },
-  {
-    id: 2,
-    title: 'Subscription',
-    message: 'You have a new subscriber: Jane Doe.',
-    time: '10 minutes ago',
-    type: 'subscription',
-  },
-  {
-    id: 3,
-    title: 'Comment',
-    message: 'Emily commented on your post.',
-    time: '1 hour ago',
-    type: 'comment',
-  },
-];
+import { getNotifications, markNotificationAsRead } from '../services/notifications';
+import { formatDistanceToNow } from 'date-fns';
+import { Link } from 'react-router-dom';
 
 const iconMap = {
   follow: (
@@ -45,35 +24,68 @@ const iconMap = {
   ),
 };
 
-const NotificationsPage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => (
-  <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-    <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />
-    <div className="max-w-2xl mx-auto pt-24 pb-12 px-4">
-      <h1 className="text-3xl font-bold mb-8 text-center">Notifications</h1>
-      <div className="space-y-4">
-        {notifications.length === 0 ? (
-          <div className="text-center text-gray-400">No notifications yet.</div>
-        ) : (
-          notifications.map((notif) => (
-            <div
-              key={notif.id}
-              className={`flex items-start gap-4 p-4 rounded-xl shadow transition-colors duration-300 ${
-                isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-              }`}
-            >
-              <div>{iconMap[notif.type]}</div>
-              <div className="flex-1">
-                <div className="font-semibold">{notif.title}</div>
-                <div className="text-sm">{notif.message}</div>
-                <div className="text-xs text-gray-400 mt-1">{notif.time}</div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-    <Footer isDarkMode={isDarkMode} />
-  </div>
-);
+const NotificationsPage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
+  const [notifications, setNotifications] = useState([]);
+  const userId = "688785e69f794e8d634682c7"; // replace with logged-in user id
 
-export default NotificationsPage; 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await getNotifications(userId);
+        setNotifications(data);
+      } catch (err) {
+        console.error("❌ Error fetching notifications:", err);
+      }
+    };
+
+    fetchNotifications();
+  }, [userId]);
+
+  const handleMarkAsRead = async (id) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications(prev =>
+        prev.map(n => n._id === id ? { ...n, is_read: true } : n)
+      );
+    } catch (err) {
+      console.error("❌ Error marking notification as read:", err);
+    }
+  };
+
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />
+      <div className="max-w-2xl mx-auto pt-24 pb-12 px-4">
+        <h1 className="text-3xl font-bold mb-8 text-center">Notifications</h1>
+        <div className="space-y-4">
+          {notifications.length === 0 ? (
+            <div className="text-center text-gray-400">No notifications yet.</div>
+          ) : (
+            notifications.map((notif) => (
+              <Link
+                to={`/posts/${notif.post_id}?highlight=${notif.comment_id}`}
+                onClick={() => !notif.is_read && handleMarkAsRead(notif._id)}
+                key={notif._id}
+                className={`flex items-start gap-4 p-4 rounded-xl shadow transition-colors duration-300 cursor-pointer ${notif.is_read
+                    ? isDarkMode ? 'bg-gray-700 border border-gray-700 opacity-60' : 'bg-gray-100 border border-gray-200 opacity-60'
+                    : isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                  }`}
+              >
+
+                <div>{iconMap[notif.type]}</div>
+                <div className="flex-1">
+                  <div className="font-semibold">{notif.type === 'comment' ? 'Comment' : notif.type === 'follow' ? 'New Follower' : 'Subscription'}</div>
+                  <div className="text-sm">{notif.actor_id?.username || 'Someone'} {notif.message}</div>
+                  <div className="text-xs text-gray-400 mt-1">{formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}</div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+      <Footer isDarkMode={isDarkMode} />
+    </div>
+  );
+};
+
+export default NotificationsPage;

@@ -1,21 +1,25 @@
 import React from "react";
 import Comment from "./Comment";
 
-export default function CommentList({
-  comments,
-  postId,
-  onReply,
-  onUpdate,
-  onDelete,
-  onToggleLike,
-  getReplies,
-  currentUser,
-  loading 
-}) {
-  return comments.map(comment => (
-    <div key={comment._id || comment.id} className="comment-stack">
+function CommentWrapper({ comment, postId, highlightId, ...props }) {
+  const isHighlighted = comment._id === highlightId;
+  const commentRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (isHighlighted && commentRef.current) {
+      commentRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [isHighlighted]);
+
+  return (
+    <div
+      ref={isHighlighted ? commentRef : null}
+      className={`comment-stack transition duration-300 ${
+        isHighlighted ? "bg-yellow-100 border-l-4 border-yellow-500 rounded-md shadow" : ""
+      }`}
+    >
       <Comment
-        id={comment._id || comment.id}
+        id={comment._id}
         postId={comment.postId || postId}
         parentId={comment.parentId || null}
         message={comment.message}
@@ -23,14 +27,38 @@ export default function CommentList({
         createdAt={comment.createdAt}
         likeCount={comment.likeCount}
         likedByMe={comment.likedByMe}
-        onReply={onReply}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-        onToggleLike={onToggleLike}
-        getReplies={getReplies}
-        currentUser={currentUser}
-        loading={loading}
+        {...props}
       />
     </div>
+  );
+}
+
+export default function CommentList({
+  comments = [],
+  postId,
+  onReply,
+  onUpdate,
+  onDelete,
+  onToggleLike,
+  getReplies,
+  currentUser,
+  loading,
+  highlightId // ✅ comes from URL query param or notification
+}) {
+  return comments.map((comment) => (
+    <CommentWrapper
+      key={comment._id}
+      comment={comment}
+      postId={postId}
+      highlightId={highlightId}
+      onReply={onReply}
+      onUpdate={onUpdate}
+      onDelete={onDelete}
+      onToggleLike={onToggleLike}
+      getReplies={getReplies}
+      currentUser={currentUser}
+      loading={loading}
+    />
   ));
 }
+

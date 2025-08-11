@@ -7,23 +7,33 @@ import {
   updateComment,
   deleteComment,
   toggleCommentLike,
-  getPost
+  getPost,
+  getCurrentUser
 } from '../services/comments';
-
-// Mock user for now - in a real app, this would come from auth context
-const mockUser = {
-  _id: '6881ceabc50a8272ca0734e2',
-  name: 'Current User'
-};
 
 export default function CommentsSection({ postId, title = "Comments" }) {
   const [comments, setComments] = useState([]);
-  const [currentUser] = useState(mockUser); // In real app, get from auth context
+    const [currentUser, setCurrentUser] = useState(null); // Real user
   
   const createCommentFn = useAsyncFn(createComment);
   const updateCommentFn = useAsyncFn(updateComment);
   const deleteCommentFn = useAsyncFn(deleteComment);
   const toggleCommentLikeFn = useAsyncFn(toggleCommentLike);
+
+   // Fetch the current user based on token in localStorage
+  useEffect(() => {
+    const token = localStorage.getItem('token');  // Get the token
+    if (token) {
+      getCurrentUser(token)  // Assume this is an API call that returns the user data
+        .then(user => {
+          setCurrentUser(user);
+          console.log('Current user set:', user);  // Log the user data
+        })
+        .catch(err => {
+          console.error('Failed to get current user:', err);
+        });
+    }
+  }, []);
 
   // Group comments by parentId for nested structure
   const commentsByParentId = useMemo(() => {
@@ -34,6 +44,7 @@ export default function CommentsSection({ postId, title = "Comments" }) {
     });
     return group;
   }, [comments]);
+
 
   const rootComments = commentsByParentId[null] || [];
 
@@ -98,28 +109,27 @@ export default function CommentsSection({ postId, title = "Comments" }) {
 
   // Handler functions
   function onCommentCreate(message) {
-    if (!currentUser) return Promise.reject('User not logged in');
-    
-    return createCommentFn.execute({
-      postId,
-      message,
-      parentId: null,
-      user: currentUser,
-    }).then(comment => {
-      createLocalComment(comment);
-    });
-  }
+  if (!currentUser) return Promise.reject('User not logged in');
 
-  function onCommentReply({ postId, message, parentId, user }) {
-    return createCommentFn.execute({
-      postId,
-      message,
-      parentId,
-      user,
-    }).then(comment => {
-      createLocalComment(comment);
-    });
-  }
+  return createCommentFn.execute({
+    postId,
+    message,
+    parentId: null,
+  }).then(comment => {
+    createLocalComment(comment);
+  });
+}
+
+function onCommentReply({ postId, message, parentId }) {
+  return createCommentFn.execute({
+    postId,
+    message,
+    parentId,
+  }).then(comment => {
+    createLocalComment(comment);
+  });
+}
+
 
   function onCommentUpdate({ message, id, userId }) {
     return updateCommentFn.execute({
@@ -146,6 +156,7 @@ export default function CommentsSection({ postId, title = "Comments" }) {
       userId,
     }).then(({ addLike }) => {
       toggleLocalCommentLike(id, addLike);
+      return { addLike }
     });
   }
 

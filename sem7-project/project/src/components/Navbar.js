@@ -15,7 +15,7 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
               to="/" 
               className={`text-2xl font-bold transition-colors duration-300 ${isDarkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-700'}`}
             >
-              SubHub
+              Nexora
             </Link>
           </div>
           
@@ -28,7 +28,7 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
                 Home
               </Link>
               <Link 
-                to="/facts" 
+                to="/creators" 
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`}
               >
                 Creators

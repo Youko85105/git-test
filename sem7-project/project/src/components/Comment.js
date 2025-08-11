@@ -26,14 +26,16 @@ export default function Comment({
   currentUser,
   loading = {}
 }) {
-  const [areChildrenHidden, setAreChildrenHidden] = useState(true);
+  const [areChildrenHidden, setAreChildrenHidden] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
   const childComments = getReplies ? getReplies(id) : [];
+  console.log("Comment user:", user);
+  console.log("Comment username?",user.username)
+  console.log("Comment user:", JSON.stringify(user, null, 2));
   const commentOwnerId = user?.id || user?._id;
   const deleted = !message;
-  const commentClassName = `comment${deleted ? " deleted-comment" : ""}`;
 
   function onCommentReply(message) {
     if (!currentUser) return;
@@ -51,7 +53,7 @@ export default function Comment({
     return onUpdate({
       message,
       id,
-      userId: currentUser._id,
+      //userId: currentUser._id,
     }).then(() => {
       setIsEditing(false);
     });
@@ -60,22 +62,23 @@ export default function Comment({
   function onCommentDelete() {
     return onDelete({
       id,
-      userId: currentUser._id,
+      //userId: currentUser._id,
     });
   }
 
-  function onToggleCommentLike() {
-    return onToggleLike({
-      id,
-      userId: currentUser._id,
-    });
-  }
+function onToggleCommentLike() {
+  return onToggleLike({ id })
+    .then(({ addLike }) => {
+      console.log("Toggled like:", addLike)
+    })
+}
+
 
   return (
     <>
-      <div className={commentClassName}>
+      <div className="comment">
         <div className="comment-header">
-        <span className="comment-author">{user?.name || "Anonymous"}</span>
+  <span className="comment-author">{user?.username || "Anonymous"}</span>
           <span className="comment-date">
             {dateFormatter.format(Date.parse(createdAt))}
           </span>

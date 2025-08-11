@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import { useNavigate } from "react-router-dom";
+
 
 const LoginPage = ({ isDarkMode, toggleTheme }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,6 +14,9 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
     name: ''
   });
 
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -18,14 +24,39 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
     });
   };
 
-  const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLogin) {
-      console.log('Login attempt:', { email: formData.email, password: formData.password });
-      // Add login logic here
-    } else {
-      console.log('Register attempt:', formData);
-      // Add registration logic here
+    setError('');
+
+    const endpoint = isLogin ? 'http://localhost:3002/api/auth/login' : 'http://localhost:3002/api/auth/register';
+
+    const payload = isLogin
+      ? { email: formData.email, password: formData.password }
+      : {
+          username: formData.name,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword
+        };
+
+    try {
+      const response = await axios.post(endpoint, payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const { token, user } = response.data;
+
+      // Save token & user to localStorage (or cookies if you prefer)
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      console.log(`${isLogin ? 'Login' : 'Register'} success`, user);
+
+      // Example: redirect or show success
+      navigate("/"); //← if using react-router-dom
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Something went wrong!');
     }
   };
 

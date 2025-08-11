@@ -1,33 +1,80 @@
 import { makeRequest } from "./api";
 
-export function createComment({ postId, message, parentId, user }) {
-  return makeRequest(`/posts/${postId}/comments`, {
+export function createComment({ postId, message, parentId }) {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    return Promise.reject('User is not authenticated');
+  }
+
+  return makeRequest(`/private/comment`, {
     method: "POST",
-    data: { message, parentId, user },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: { message, postId, parentId },
   });
 }
 
-export function updateComment({ message, id, userId }) {
-  return makeRequest(`/comments/${id}`, {
+
+
+
+export function updateComment({ message, id }) {
+  const token = localStorage.getItem('token');
+  return makeRequest(`/private/comment/${id}`, {
     method: "PUT",
-    data: { message, userId },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: { message },
   });
 }
 
-export function deleteComment({ id, userId }) {
-  return makeRequest(`/comments/${id}`, {
+
+export function deleteComment({ id }) {
+  const token = localStorage.getItem('token');
+  return makeRequest(`/private/comment/${id}`, {
     method: "DELETE",
-    data: { userId },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
   });
 }
 
-export function toggleCommentLike({ id: commentId, userId }) {
-  return makeRequest(`/likes/toggle`, {
+
+
+export function toggleCommentLike({ id: commentId }) {
+  const token = localStorage.getItem('token');
+  return makeRequest(`/private/like/toggle`, {
     method: "POST",
-    data: { user: userId, commentId },
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: { commentId },
   });
 }
+
 
 export function getPost(postId) {
-  return makeRequest(`/posts/${postId}`);
+  const token = localStorage.getItem('token');
+  return makeRequest(`/private/post/${postId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+
+// This function makes a request to get the current user data based on the JWT token.
+export function getCurrentUser(token) {
+  return makeRequest(`/user`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    }
+  }).then(data => data.user);
 }

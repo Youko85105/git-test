@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
 
@@ -6,13 +6,39 @@ const DEFAULT_IMAGE = '/images/creator-laptop.jpg';
 
 const EditProfile = ({ isDarkMode, toggleTheme }) => {
   const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    bio: 'Business & Analytics | Expert in data-driven content creation.',
+    name: '',
+    email: '',
+    bio: '',
     password: '',
     image: DEFAULT_IMAGE,
   });
   const [imagePreview, setImagePreview] = useState(DEFAULT_IMAGE);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  useEffect(() => {
+    fetch('http://localhost:3002/api/users/me')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch profile');
+        return res.json();
+      })
+      .then(data => {
+        setProfile({
+          name: data.name || data.username || '',
+          email: data.email || '',
+          bio: data.bio || '',
+          password: '',
+          image: data.profilePic?.url || DEFAULT_IMAGE,
+        });
+        setImagePreview(data.profilePic?.url || DEFAULT_IMAGE);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,9 +59,40 @@ const EditProfile = ({ isDarkMode, toggleTheme }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Mock save functionality
-    alert('Profile saved!');
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    fetch('http://localhost:3002/api/users/me', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: profile.name,
+        email: profile.email,
+        bio: profile.bio,
+        password: profile.password,
+        profilePic: profile.image,
+      })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to update profile');
+        return res.json();
+      })
+      .then(data => {
+        setSuccess('Profile saved!');
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
   };
+
+  if (loading) {
+    return <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Loading profile...</div>;
+  }
+  if (error) {
+    return <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Error: {error}</div>;
+  }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -43,6 +100,7 @@ const EditProfile = ({ isDarkMode, toggleTheme }) => {
       <div className="flex items-center justify-center min-h-screen pt-16">
         <form onSubmit={handleSubmit} className={`w-full max-w-lg p-8 rounded-2xl shadow-xl transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}> 
           <h2 className="text-2xl font-bold mb-8 text-center">Edit Profile</h2>
+          {success && <div className="mb-4 text-green-600 text-center">{success}</div>}
           <div className="flex flex-col items-center mb-6">
             <img
               src={imagePreview}
