@@ -6,6 +6,7 @@ import { deleteImage } from "../Util/CloudinaryUpload.js";
 import { checkAuthorization } from "./Authorization.js";
 import Comment from "../models/comment.model.js";
 import Like from "../models/like.model.js";
+import { notify } from "../services/notifications.js";
 
 export const createPost = async (req, res) => {
     checkAuthorization(req, res);
@@ -25,6 +26,32 @@ export const createPost = async (req, res) => {
         try {
             const newPost = new Post(post);
             await newPost.save();
+            // ✅ Notify all active subscribers that this creator published a new post
+            try {
+                const subs = await Subscription
+                    .find({ creatorId: user, active: true })
+                    .select("subscriberId")
+                    .lean();
+
+                const actorId = user; // the creator who posted
+                const creatorName = req.user?.username || "A creator you follow";
+
+                await Promise.all(
+                    subs.map(s =>
+                        notify({
+                            userId: s.subscriberId,         // recipient
+                            actorId,                         // who caused it
+                            type: "post:new",                // your type key
+                            message: `${creatorName} posted a new update`,
+                            metadata: { postId: newPost._id, creatorId: actorId },
+                        })
+                    )
+                );
+            } catch (nErr) {
+                // don't fail the request if notifications hiccup
+                console.warn("notify(post:new) failed:", nErr);
+            }
+
             return res.status(201).json({ message: "Post created successfully", post: newPost });
         } catch (error) {
             return res.status(501).json({ message: error });

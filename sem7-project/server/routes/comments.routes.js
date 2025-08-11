@@ -33,19 +33,43 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).select('author').lean();
 
-    if (post && post.user_id && post.user_id.toString() !== user._id.toString()) {
-      await Notification.create({
-        user_id: post.user_id,
-        actor_id: user._id,
-        type: 'comment',
-        message: `💬 ${comment.user.username} commented on your post.`,
-        post_id: postId,
-        comment_id: comment._id,
-        is_read: false,
+    // --- Notifications ---
+try {
+  const meId = req.user._id;
+  const meName = req.user?.username || 'Someone';
+
+  if (parentId) {
+    // reply to an existing comment -> notify parent comment author
+    const parent = await Comment.findById(parentId).select('user').lean();
+    if (parent && String(parent.user) !== String(meId)) {
+      await notify({
+        userId: parent.user,            // recipient
+        actorId: meId,                  // who triggered
+        type: 'comment:reply',
+        message: `${meName} replied to your comment`,
+        metadata: { postId, commentId: comment._id },
       });
     }
+  } else {
+    // top-level comment -> notify post author/creator
+    const post = await Post.findById(postId).select('author').lean();
+    if (post?.author && String(post.author) !== String(meId)) {
+      await notify({
+        userId: post.author,
+        actorId: meId,
+        type: 'comment:new',
+        message: `${meName} commented on your post`,
+        metadata: { postId, commentId: comment._id },
+      });
+    }
+  }
+} catch (nErr) {
+  console.warn('notify(comment) failed:', nErr);
+  // do not fail the request if notifications hiccup
+}
+
 
     res.status(201).json(comment);
   } catch (err) {
