@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import Navbar from './Navbar';
 
-const CreatorsPage = ({ isDarkMode }) => {
+const CreatorsPage = ({ isDarkMode ,toggleTheme }) => {
   const [creators, setCreators] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,6 +32,7 @@ const CreatorsPage = ({ isDarkMode }) => {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>  
+    <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
       <div className="max-w-6xl mx-auto py-16 px-8">
         <h1 className="text-4xl font-bold mb-8 text-center">Creators</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

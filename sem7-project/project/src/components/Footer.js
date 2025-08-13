@@ -18,7 +18,7 @@ const Footer = ({ isDarkMode }) => {
             <h3 className="text-xl font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li><a href="/" className="text-gray-300 hover:text-white transition-colors duration-300">Home</a></li>
-              <li><a href="/facts" className="text-gray-300 hover:text-white transition-colors duration-300">Creators</a></li>
+              <li><a href="/creators" className="text-gray-300 hover:text-white transition-colors duration-300">Creators</a></li>
               <li><a href="/subscriptions" className="text-gray-300 hover:text-white transition-colors duration-300">Subscriptions</a></li>
               <li><a href="/contact" className="text-gray-300 hover:text-white transition-colors duration-300">Contact</a></li>
             </ul>

@@ -38,15 +38,15 @@ export async function getDashboardData(req, res) {
         detailedUser = await User.findById(userId)
           .select("username profilePic bio role")
           .lean();
-        detailedUser.subscriptions = getSubs(userId);
+        detailedUser.subscriptions = await getSubs(userId);
         break;
 
       case "creator":
         detailedUser = await Creator.findById(userId)
           .select("username profilePic bio role")
           .lean();
-        detailedUser.subscriptions = getSubs(userId);
-        detailedUser.subscribers = getFans(userId);
+        detailedUser.subscriptions = await getSubs(userId);
+        detailedUser.subscribers = await getFans(userId);
         break;
 
       default:
@@ -66,42 +66,50 @@ export async function getDashboardData(req, res) {
 };
 
 const getSubs = async (userId) => {
-  try{
-    const subs =  await Subscription.find({subscriberId : userId}).select("creatorId");
-  }catch(err){
-    throw new Error(err);
-  }
+  const subs = await Subscription.find({
+    subscriberId: userId,
+    active: true,
+  })
+    .select('creatorId') // include the field we need
+    .populate('creatorId', 'username bio profilePic role') // bring creator doc
+
+  // return populated creators
+  return subs.map(s => s.creatorId);
 };
 
 const getFans = async (userId) => {
-  try{
-    return fans = await Subscription.find({creatorId : userId}).select("subscriberId");
-  }catch(err){
-    throw new Error(err);
+  const subs = await Subscription.find({
+    creatorId: userId,
+    active: true,
+  })
+    .select('subscriberId') // include the field we need
+    .populate('subscriberId', 'username bio profilePic role'); // bring subscriber doc
+
+  // return populated subscribers
+  return subs.map(s => s.subscriberId);
+};
+
+
+export const getSubscriptions = async (req, res) => {
+  try {
+    checkAuthorization(req, res);
+    const subscriptions = await getSubs(req.user.id);
+    return res.status(200).json(subscriptions);
+  } catch (err) {
+    return res.status(500).json({ message: String(err) });
   }
 };
 
-export const getSubscriptions = (req,res) => {
-  try{
-    const subscriptions = getSubs(req.user.id);
-    let creatorIds;
-    subscriptions.map(subscription => creatorIds.push(subscription.creatorId));
-    return res.status(200).json(creatorIds);
-  }catch(err){
-    return res.status(404).json({message : err});
+export const getSubscribers = async (req, res) => {
+  try {
+    checkAuthorization(req, res);
+    const subscribers = await getFans(req.user.id);
+    return res.status(200).json(subscribers);
+  } catch (err) {
+    return res.status(500).json({ message: String(err) });
   }
 };
 
-export const getSubscribers = (req,res) => {
-  try{
-    const subscriptions = getSubs(req.user.id);
-    let subscriberIds;
-    subscriptions.map(subscription => subscriberIds.push(subscription.creatorId));
-    return res.status(200).json(subscriberIds);
-  }catch(err){
-    return res.status(404).json({message : err});
-  }
-};
 
 export const updateDashboardData = async (req, res) => {
   try {

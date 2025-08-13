@@ -2,58 +2,47 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
 import Footer from './Footer';
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from '../AuthContext';
 
 const LoginPage = ({ isDarkMode, toggleTheme }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    name: ''
-  });
-
+  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '', name: '' });
   const [error, setError] = useState('');
+
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-    const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    const endpoint = isLogin ? 'http://localhost:3002/api/auth/login' : 'http://localhost:3002/api/auth/register';
+    const endpoint = isLogin
+      ? 'http://localhost:3002/api/auth/login'
+      : 'http://localhost:3002/api/auth/register';
 
     const payload = isLogin
       ? { email: formData.email, password: formData.password }
-      : {
-          username: formData.name,
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword
-        };
+      : { username: formData.name, email: formData.email, password: formData.password, confirmPassword: formData.confirmPassword };
 
     try {
-      const response = await axios.post(endpoint, payload, {
+      const { data } = await axios.post(endpoint, payload, {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      const { token, user } = response.data;
+      const { token, user } = data;
 
-      // Save token & user to localStorage (or cookies if you prefer)
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      // 🔐 update global auth state (saves token+user & sets axios header)
+      login(token, user);
 
-      console.log(`${isLogin ? 'Login' : 'Register'} success`, user);
-
-      // Example: redirect or show success
-      navigate("/"); //← if using react-router-dom
+      // 🔁 send them back to where they came from (ProtectedRoute) or home
+      navigate(from, { replace: true });
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || 'Something went wrong!');
@@ -63,7 +52,7 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
       <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
-      
+
       <div className="flex items-center justify-center min-h-screen pt-16">
         <div className={`w-full max-w-md p-8 rounded-2xl shadow-xl transition-colors duration-300 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
           <div className="text-center mb-8">
@@ -74,6 +63,8 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
               {isLogin ? 'Sign in to your account' : 'Create your account to get started'}
             </p>
           </div>
+
+          {error && <div className="mb-4 text-sm text-red-500">{error}</div>}
 
           <div className="flex bg-gray-100 rounded-lg p-1 mb-8">
             <button 
@@ -198,4 +189,4 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
   );
 };
 
-export default LoginPage; 
+export default LoginPage;

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import axios from 'axios';                  // already used elsewhere
+const API = process.env.REACT_APP_API_URL;  // e.g. http://localhost:3000/api
 
 const DEFAULT_IMAGE = '/images/creator-laptop.jpg';
 
@@ -16,29 +18,30 @@ const EditProfile = ({ isDarkMode, toggleTheme }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:3002/api/users/me')
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch profile');
-        return res.json();
-      })
-      .then(data => {
-        setProfile({
-          name: data.name || data.username || '',
-          email: data.email || '',
-          bio: data.bio || '',
-          password: '',
-          image: data.profilePic?.url || DEFAULT_IMAGE,
-        });
-        setImagePreview(data.profilePic?.url || DEFAULT_IMAGE);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
+  const run = async () => {
+    try {
+      const { data } = await axios.get(`${API}/private/dashboard`);
+      const pic = data.profilePic && (data.profilePic.url || data.profilePic);
+      setProfile({
+        name: data.username || data.name || '',
+        email: data.email || '',
+        bio: data.bio || '',
+        password: '',
+        image: pic || DEFAULT_IMAGE,
       });
-  }, []);
+      setImagePreview(pic || DEFAULT_IMAGE);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to fetch profile');
+      setLoading(false);
+    }
+  };
+  run();
+}, []);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,46 +49,54 @@ const EditProfile = ({ isDarkMode, toggleTheme }) => {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setProfile((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const file = e.target.files?.[0];
+  if (!file) return;
+  setImageFile(file);
+  setImagePreview(URL.createObjectURL(file)); // preview
+  // (do NOT put base64 in state you send to server)
+};
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    fetch('http://localhost:3002/api/users/me', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: profile.name,
-        email: profile.email,
-        bio: profile.bio,
-        password: profile.password,
-        profilePic: profile.image,
-      })
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to update profile');
-        return res.json();
-      })
-      .then(data => {
-        setSuccess('Profile saved!');
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
-  };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
+  setSuccess(null);
+
+  try {
+    const fd = new FormData();
+    fd.append('username', profile.name);   // backend reads req.body.username
+    fd.append('bio', profile.bio || '');
+    // optional: uncomment if you really intend to allow these here
+    // fd.append('email', profile.email);
+    // fd.append('password', profile.password);
+
+    if (imageFile) fd.append('profilePic', imageFile); // MUST match upload.single('profilePic')
+
+    await axios.patch(`${API}/private/dashboard`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    // Backend returns only role; fetch fresh user data to update UI
+    const { data } = await axios.get(`${API}/private/dashboard`);
+    const pic = data.profilePic && (data.profilePic.url || data.profilePic);
+    setProfile({
+      name: data.username || data.name || '',
+      email: data.email || '',
+      bio: data.bio || '',
+      password: '',
+      image: pic || DEFAULT_IMAGE,
+    });
+    setImagePreview(pic || DEFAULT_IMAGE);
+
+    setSuccess('Profile saved!');
+  } catch (err) {
+    setError('Failed to update profile');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (loading) {
     return <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>Loading profile...</div>;

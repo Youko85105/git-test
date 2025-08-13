@@ -8,7 +8,7 @@ const CreatorProfile = ({ isDarkMode }) => {
   const [error, setError] = useState(null);
   // Mock: change to false to see the subscribe prompt
   const isSubscribed = true;
-
+ console.log(isSubscribed);
   useEffect(() => {
     fetch(`http://localhost:3002/api/public/creator/${id}`)
       .then(res => {

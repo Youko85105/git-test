@@ -4,8 +4,11 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import CommentsSection from './CommentsSection';
 import axios from 'axios';
+import { useAuth } from '../AuthContext';            // ✅ add
 
-const Homepage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
+const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, logout props
+  const { isLoggedIn } = useAuth();                  // ✅ read from context
+
   // Creators state
   const [creators, setCreators] = useState([]);
   const [creatorsLoading, setCreatorsLoading] = useState(true);
@@ -16,31 +19,41 @@ const Homepage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
   const [postsLoading, setPostsLoading] = useState(true);
   const [postsError, setPostsError] = useState(null);
 
-  // Fetch posts for the logged-in user
+    // ✅ Fetch posts only when logged in, and re-run when login state changes
   useEffect(() => {
     const fetchPosts = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setPostsError('User is not authenticated.');
+      if (!isLoggedIn) {
+        setPosts([]);
         setPostsLoading(false);
+        setPostsError(null);
         return;
       }
 
+      setPostsLoading(true);
+      setPostsError(null);
+
       try {
         const base = process.env.REACT_APP_API_URL; // e.g. http://localhost:3000/api
+        if (!base) throw new Error("REACT_APP_API_URL not set");
         const url = `${base}/private/post`;
+
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error("Missing token");
+
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPosts(res.data || []);
       } catch (err) {
+        console.error("Fetch posts failed:", err);
         setPostsError('Failed to fetch posts.');
       } finally {
         setPostsLoading(false);
       }
     };
+
     fetchPosts();
-  }, []);
+  }, [isLoggedIn]);  // ✅ key line
 
   // ---------- Fetch Creators (tries modern endpoint, then legacy) ----------
   useEffect(() => {
@@ -77,8 +90,7 @@ const Homepage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
 
  return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
-      <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />
-
+      <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} /> {/* ✅ no auth props */}
       {/* Hero Section */}
       <div className="flex items-center justify-between max-w-6xl mx-auto px-8 py-16 mt-16 min-h-[80vh]">
         <div className="flex-1">
@@ -138,7 +150,7 @@ const Homepage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
           <div className="flex items-center justify-between mb-8">
             <h2 className={`text-4xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Some Creators</h2>
             <Link
-              to="/facts"
+              to="/creators"
               className={`font-semibold transition-colors duration-300 hover:opacity-80 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
             >
               See All →
@@ -227,36 +239,41 @@ const Homepage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
         </div>
       </div>
 
-      {/* Community Discussion Section (Posts + Comments) */}
+      {/* Community Discussion */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className={`rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Community Discussion</h2>
-          <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
             Share your thoughts about our healthcare platform and connect with other users.
           </p>
 
-          {postsLoading && <p>Loading posts...</p>}
-          {postsError && <p className="text-red-500">{postsError}</p>}
+          {/* ✅ If logged out, show CTA instead of error */}
+          {!isLoggedIn && (
+            <div className="text-sm opacity-80">
+              Please <Link to="/login" className="text-blue-600 underline">log in</Link> to view and discuss posts.
+            </div>
+          )}
 
-          <div className="space-y-6">
-            {posts.map((post) => (
-              <div
-                key={post._id}
-                className={`rounded-2xl overflow-hidden shadow-lg ${isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-white border border-gray-200'}`}
-              >
-                <div className="p-6">
-                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{post.title}</h3>
-                  <p className={`leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{post.body}</p>
-                  <CommentsSection postId={post._id} title="Comments" />
+          {isLoggedIn && postsLoading && <p>Loading posts...</p>}
+          {isLoggedIn && postsError && <p className="text-red-500">{postsError}</p>}
+
+          {isLoggedIn && !postsLoading && !postsError && (
+            <div className="space-y-6">
+              {posts.map((post) => (
+                <div key={post._id} className={`rounded-2xl overflow-hidden shadow-lg ${isDarkMode ? 'bg-gray-700 border border-gray-600' : 'bg-white border border-gray-200'}`}>
+                  <div className="p-6">
+                    <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{post.title}</h3>
+                    <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{post.body}</p>
+                    <CommentsSection postId={post._id} title="Comments" />
+                  </div>
                 </div>
-              </div>
-            ))}
-            {!postsLoading && !postsError && posts.length === 0 && (
-              <div className="text-center text-sm opacity-70">No posts yet.</div>
-            )}
-          </div>
+              ))}
+              {posts.length === 0 && <div className="text-center text-sm opacity-70">No posts yet.</div>}
+            </div>
+          )}
         </div>
       </div>
+
 
       <Footer isDarkMode={isDarkMode} />
     </div>

@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
+import { useAuth } from '../AuthContext'; // ← adjust path if your AuthContext is elsewhere
 
-const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
-  // Example: 3 unread notifications (can be dynamic)
+const Navbar = ({ isDarkMode, toggleTheme }) => {
+  const { isLoggedIn, logout } = useAuth(); // ← get auth state from context
   const unreadCount = 3;
 
   return (
@@ -51,12 +52,7 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
               >
                 Contact
               </Link>
-              <Link 
-                to="/comments-demo" 
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-purple-400 hover:text-white hover:bg-gray-700' : 'text-purple-700 hover:text-gray-900 hover:bg-gray-100'}`}
-              >
-                Comments Demo
-              </Link>
+
               {isLoggedIn && (
                 <Link 
                   to="/edit-profile" 
@@ -69,7 +65,6 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
           </div>
           
           <div className="flex items-center space-x-4">
-            {/* Notification Bell Icon links to notifications page */}
             <Link to="/notifications" className="relative focus:outline-none group" aria-label="Notifications">
               <svg
                 className={`w-6 h-6 ${isDarkMode ? 'text-white group-hover:text-blue-400' : 'text-gray-700 group-hover:text-blue-600'} transition-colors duration-200`}
@@ -84,15 +79,14 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
                 <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500"></span>
               )}
             </Link>
+
             {isLoggedIn ? (
-              <>
-                <button
-                  onClick={logout}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-white bg-red-600 hover:bg-red-700' : 'text-white bg-red-600 hover:bg-red-700'}`}
-                >
-                  Logout
-                </button>
-              </>
+              <button
+                onClick={logout}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-white bg-red-600 hover:bg-red-700' : 'text-white bg-red-600 hover:bg-red-700'}`}
+              >
+                Logout
+              </button>
             ) : (
               <Link 
                 to="/login" 
@@ -101,6 +95,7 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
                 Login
               </Link>
             )}
+
             <ThemeToggle isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
           </div>
         </div>
@@ -109,4 +104,4 @@ const Navbar = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
   );
 };
 
-export default Navbar; 
+export default Navbar;
