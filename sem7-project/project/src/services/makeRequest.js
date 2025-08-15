@@ -1,32 +1,38 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL, // Use the base URL from your .env file
-  withCredentials: true,  // Ensure cookies are included with requests if needed
+  baseURL: process.env.REACT_APP_API_URL, // e.g. http://localhost:3002/api
+  withCredentials: true,
 });
 
-// Add Authorization header with the token (if available) to all requests
+// Attach JWT to all requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");  // Get token from localStorage
-    if (token) {
-      config.headers["Authorization"] = `Bearer ${token}`;  // Add token to Authorization header
-    }
+    const token = localStorage.getItem("token");
+    if (token) config.headers["Authorization"] = `Bearer ${token}`;
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export function makeRequest(url, options = {}) {
+  // Special-case DELETE with body
   if (options.method === "DELETE" && options.data) {
-    return api.delete(url, { data: options.data })
-      .then(res => res.data)
-      .catch(error => Promise.reject(error?.response?.data?.message ?? "Something went wrong"));
+    return api
+      .delete(url, { data: options.data })
+      .then((res) => res.data)
+      .catch((err) => Promise.reject(normalizeErr(err)));
   }
 
   return api(url, options)
-    .then(res => res.data)
-    .catch(error => Promise.reject(error?.response?.data?.message ?? "Something went wrong"));
+    .then((res) => res.data)
+    .catch((err) => Promise.reject(normalizeErr(err)));
+}
+
+function normalizeErr(err) {
+  const status = err?.response?.status;
+  const data = err?.response?.data;
+  const message =
+    data?.message || err?.message || "Something went wrong";
+  return { status, data, message };
 }

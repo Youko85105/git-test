@@ -3,32 +3,34 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 
 const AuthCtx = createContext(null);
+export const useAuth = () => useContext(AuthCtx);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // <- expose this
 
-  // Load token & user from localStorage on first render
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  const raw = localStorage.getItem("user"); // might be "undefined" from old code
-
-  if (token) {
-    axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  }
-
-  // only parse if it looks like real JSON; otherwise clean it up
-  if (raw && raw !== "undefined" && raw !== "null") {
     try {
-      setUser(JSON.parse(raw));
-    } catch {
-      // corrupt value -> remove it so app can recover
-      localStorage.removeItem("user");
-    }
-  } else {
-    localStorage.removeItem("user");
-  }
-}, []);
+      const token = localStorage.getItem("token");
+      const raw = localStorage.getItem("user"); // might be "undefined" from old code
 
+      if (token) {
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      }
+
+      if (raw && raw !== "undefined" && raw !== "null") {
+        try {
+          setUser(JSON.parse(raw));
+        } catch {
+          localStorage.removeItem("user"); // corrupt -> clean up
+        }
+      } else {
+        localStorage.removeItem("user");
+      }
+    } finally {
+      setLoading(false); // <- ALWAYS clear loading
+    }
+  }, []);
 
   const login = (token, userObj) => {
     localStorage.setItem("token", token);
@@ -45,10 +47,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthCtx.Provider value={{ user, isLoggedIn: !!user, login, logout }}>
+    <AuthCtx.Provider value={{ user, isLoggedIn: !!user, loading, login, logout }}>
       {children}
     </AuthCtx.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthCtx);

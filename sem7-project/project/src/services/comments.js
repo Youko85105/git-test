@@ -61,7 +61,7 @@ export function toggleCommentLike({ id: commentId }) {
 
 export function getPost(postId) {
   const token = localStorage.getItem('token');
-  return makeRequest(`/private/post/${postId}`, {
+  return makeRequest(`/private/post/detail/${postId}`, {
     headers: {
       Authorization: `Bearer ${token}`
     }

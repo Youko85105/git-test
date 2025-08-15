@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Homepage from './components/Homepage';
 import FactsPage from './components/FactsPage';
 import AboutPage from './components/AboutPage';
@@ -13,6 +13,8 @@ import CreatorProfile from './components/CreatorProfile';
 import CreatorsPage from './components/CreatorsPage';
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
+import SubscribeSuccess from "./components/SubscribeSuccess";
+
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -39,7 +41,18 @@ function App() {
           <Route path="/login" element={<LoginPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/creator/:id" element={<CreatorProfile isDarkMode={isDarkMode} />} />
           <Route path="/creators" element={<CreatorsPage isDarkMode={isDarkMode} />} />
-
+          <Route path="/success" element={<SubscribeSuccess isDarkMode={isDarkMode} />} />
+        <Route
+          path="/cancel"
+          element={
+            <div className={`min-h-screen grid place-items-center ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"}`}>
+              <div className={`p-8 rounded-xl border shadow ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+                <h1 className="text-2xl font-bold mb-2">Checkout canceled</h1>
+                <p>You can try subscribing again anytime.</p>
+              </div>
+            </div>
+          }
+        />
           {/* Protected pages */}
           <Route
             path="/edit-profile"
@@ -66,7 +79,7 @@ function App() {
             }
           />
           <Route
-            path="/posts/:id"
+            path="/post/:id"
             element={
               <ProtectedRoute>
                 <PostPageWrapper isDarkMode={isDarkMode} toggleTheme={toggleTheme} />

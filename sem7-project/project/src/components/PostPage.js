@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { usePost } from "../contexts/PostContext";
 import CommentList from "./CommentList";
 import Navbar from "./Navbar";
@@ -7,6 +7,7 @@ import Footer from "./Footer";
 
 const PostPage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
   const location = useLocation();
+  const [search] = useSearchParams();
   const [highlightedCommentId, setHighlightedCommentId] = useState(null);
 
   const {
@@ -22,13 +23,26 @@ const PostPage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
     loading,
   } = usePost();
 
+  // Read highlight target from state (preferred) or query (?comment= / ?highlight=)
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const highlight = searchParams.get("highlight");
-    if (highlight) {
-      setHighlightedCommentId(highlight);
+    const fromState = location.state?.highlightCommentId || null;
+    const fromQuery = search.get("comment") || search.get("highlight") || null;
+    setHighlightedCommentId(fromState || fromQuery);
+  }, [location.state, search]);
+
+  // Optional: smooth-scroll to the highlighted comment when comments load
+  useEffect(() => {
+    if (!highlightedCommentId || !comments?.length) return;
+    // Try two common hooks the comment item might expose:
+    const el =
+      document.querySelector(`[data-comment-id="${highlightedCommentId}"]`) ||
+      document.getElementById(`comment-${highlightedCommentId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-blue-500");
+      setTimeout(() => el.classList.remove("ring-2", "ring-blue-500"), 1500);
     }
-  }, [location.search]);
+  }, [highlightedCommentId, comments]);
 
   if (!post) return <div className="text-center mt-10">Loading post...</div>;
 

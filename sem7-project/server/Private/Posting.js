@@ -6,33 +6,57 @@ import { deleteImage } from "../Util/CloudinaryUpload.js";
 import { checkAuthorization } from "./Authorization.js";
 import Comment from "../models/comment.model.js";
 import Like from "../models/like.model.js";
+import { notify } from "../services/notifications.js";
 
 export const createPost = async (req, res) => {
-    checkAuthorization(req, res);
-    const user = req.user.id;
-    const post = { ...req.body };
-    post.author = new mongoose.Types.ObjectId(user);
+  checkAuthorization(req, res);
 
-    // Initialize attachments as an array if not already
-    post.attachments = post.attachments || []; // Ensure attachments is always an array
+  const actorId = req.user.id;            // creator
+  const postData = { ...req.body, author: new mongoose.Types.ObjectId(actorId) };
 
-    if (Array.isArray(req.files)) {
-        const attachments = req.attachments;
-        console.log(attachments)
-        post.attachments = attachments;
+  postData.attachments = postData.attachments || [];
+  if (Array.isArray(req.files)) postData.attachments = req.attachments || [];
+
+  if (req.user.role !== "creator") {
+    postData.attachments.forEach(pic => deleteImage(pic.publicId));
+    return res.status(401).json({ message: "Unauthorized access" });
+  }
+
+  try {
+    // 1) Create the post
+    const newPost = await new Post(postData).save();
+
+    // 2) Notify active subscribers (don’t fail the request if this hiccups)
+    try {
+      const subs = await Subscription.find({ creatorId: actorId, active: true })
+        .select("subscriberId")
+        .lean();
+
+      const creatorName = req.user?.username || "A creator you follow";
+
+      await Promise.all(
+        subs.map(s =>
+          notify({
+            userId: s.subscriberId,
+            actorId,                         // who caused it
+            type: "post:new",
+            message: `${creatorName} posted a new update`,
+            metadata: {
+    postId: newPost._id,
+    creatorId: actorId,
+    link: `/post/${newPost._id}`, // direct to post
+  },
+          })
+        )
+      );
+    } catch (nErr) {
+      console.warn("notify(post:new) failed:", nErr);
     }
-    if (req.user.role == "creator") {
-        try {
-            const newPost = new Post(post);
-            await newPost.save();
-            return res.status(201).json({ message: "Post created successfully", post: newPost });
-        } catch (error) {
-            return res.status(501).json({ message: error });
-        }
-    } else {
-        post.attachments.map(pic => deleteImage(pic.publicId));
-        return res.status(401).json({ message: "Unauthorized access" });
-    }
+
+    return res.status(201).json({ message: "Post created successfully", post: newPost });
+  } catch (error) {
+    return res.status(501).json({ message: error });
+  }
 };
 
 export const getAllPosts = async (req, res) => {
@@ -50,7 +74,7 @@ export const getAllPosts = async (req, res) => {
         } catch (error) {
             return res.status(404).json({ message: error });
         }
-    } else if (creator && isSubscribed(user, creator)) {     //show a creator's post to his active subscriber on creator's profile
+    } else if (creator && await isSubscribed(user, creator)) {     //show a creator's post to his active subscriber on creator's profile
         try {
             console.log("subscribed");
             const posts = await Post.find({ author: creator });
@@ -91,7 +115,7 @@ export const editPost = async (req, res) => {
     }
     try {
         const post = await Post.findById(postId).select('author attachments');
-        if (role == "creator" && post.author == user) {
+        if (role === "creator" && post.author?.toString() === user) { // safer compare
             const editedPost = await Post.findByIdAndUpdate(postId, { $set: editData });
             await editedPost.save();
             post.attachments.map(pic => deleteImage(pic.publicId));
@@ -126,26 +150,33 @@ export const deletePost = async (req, res) => {
     }
 };
 
-export const likePost = async (req, res) => {
+export const togglePostLike = async (req, res) => {
+  try {
     checkAuthorization(req, res);
-    const user = req.user.id;
-    const postId = req.params.postId;
-    try {
-        const post = await Post.findById(postId).select('likes author');
-        if (isSubscribed(user, post.author)) {
-            const like = new PostLike({
-                postId,
-                subscriberId: user
-            })
-            await like.save();
-            return res.status(204);
-        } else {
-            return res.status(401).json({ message: "Unauthorized access" });
-        }
-    } catch (error) {
-        return res.status(500).json({ message: error });
+    const userId = req.user.id;
+    const { postId } = req.params;
+
+    const post = await Post.findById(postId).select('author');
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const allowed = await isSubscribed(userId, post.author);
+    if (!allowed) return res.status(401).json({ message: 'Unauthorized access' });
+
+    const existing = await PostLike.findOne({ postId, subscriberId: userId });
+    if (existing) {
+      await existing.deleteOne();
+      return res.status(200).json({ liked: false });
     }
+
+    await PostLike.create({ postId, subscriberId: userId });
+    return res.status(201).json({ liked: true });
+  } catch (err) {
+    if (err?.code === 11000) return res.status(200).json({ liked: true });
+    return res.status(500).json({ message: err?.message || 'Server error' });
+  }
 };
+
+
 
 export const getPostWithComments = async (req, res) => {
     const postId = req.params.postId;

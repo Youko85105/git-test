@@ -1,11 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import { Link } from 'react-router-dom';
 import ThemeToggle from './ThemeToggle';
 import { useAuth } from '../AuthContext'; // ← adjust path if your AuthContext is elsewhere
+import { getUnreadCount } from "../services/notifications"; // <- add
 
 const Navbar = ({ isDarkMode, toggleTheme }) => {
   const { isLoggedIn, logout } = useAuth(); // ← get auth state from context
-  const unreadCount = 3;
+  const [unread, setUnread] = useState(0);
+
+const refreshUnread = async () => {
+  try {
+    const { data } = await getUnreadCount();
+    setUnread(Number(data?.count || 0));
+  } catch {
+    // ignore
+  }
+};
+
+useEffect(() => {
+  refreshUnread();
+}, []);
+
+useEffect(() => {
+  const handler = () => refreshUnread();
+  window.addEventListener("notif:changed", handler);
+  const id = setInterval(refreshUnread, 30000); // light polling
+  return () => {
+    window.removeEventListener("notif:changed", handler);
+    clearInterval(id);
+  };
+}, []);
+
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 border-b border-gray-700' : 'bg-white border-b border-gray-200 shadow-sm'}`}>
@@ -75,9 +100,10 @@ const Navbar = ({ isDarkMode, toggleTheme }) => {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
-              {unreadCount > 0 && (
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500"></span>
-              )}
+              {unread > 0 && (
+  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500"></span>
+)}
+
             </Link>
 
             {isLoggedIn ? (

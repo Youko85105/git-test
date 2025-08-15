@@ -5,7 +5,7 @@ import { getDashboardData, getSubscriptions, getSubscribers, updateDashboardData
 import { retryStripeOnboarding, getStripeDashboardLink } from "../Util/StripeHandler.js";
 import { uploadToCloudinary } from "../Util/CloudinaryUpload.js";
 import { subscribeToCreator } from "../Private/Subscribing.js";
-import { createPost, deletePost, editPost, getAllPosts, likePost } from "../Private/Posting.js";
+import { createPost, deletePost, editPost, getAllPosts,togglePostLike } from "../Private/Posting.js";
 import commentRoutes from '../routes/comments.routes.js';
 import likeRoutes from '../routes/likes.routes.js';
 import { getPostWithComments } from "../Private/Posting.js";
@@ -23,15 +23,14 @@ router.get("/stripe/onboarding", authMiddleware, retryStripeOnboarding);
 router.get("/stripe/dashboard", authMiddleware, getStripeDashboardLink);
 router.post("/subscribe/:creatorId", authMiddleware, subscribeToCreator );
 router.post("/post",authMiddleware,upload.array('attachments',3), uploadToCloudinary, createPost);
+router.get("/post/detail/:postId", authMiddleware, getPostWithComments);
 router.get("/post",authMiddleware, getAllPosts);
-router.get("/post/:postId", authMiddleware, getPostWithComments);
 router.get("/post/:creatorId",authMiddleware, getAllPosts);
 router.patch("/post/:postId", authMiddleware, upload.array('attachments',3), uploadToCloudinary, editPost);
 router.delete("/post/:postId", authMiddleware, deletePost);
-router.delete("/post/:postId", authMiddleware, likePost);
+router.post("/post/togglepostlike/:postId", authMiddleware, togglePostLike);
 router.use('/comment', authMiddleware, commentRoutes);  // ✅ protected comment routes
 router.use('/like', authMiddleware, likeRoutes);
-
 
 
 export default router;

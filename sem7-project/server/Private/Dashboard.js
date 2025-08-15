@@ -113,46 +113,66 @@ export const getSubscribers = async (req, res) => {
 
 export const updateDashboardData = async (req, res) => {
   try {
-    checkAuthorization(req,res);
-    const userId = req.user.id;
-    const userRole = req.user.role;
-  
-    // 1. Start with body fields
-    const updateData = { ...req.body };
+    checkAuthorization(req, res);
+    const { id: userId, role } = req.user;
 
-    
-  
-    // 2. If a file is uploaded, save filename or full path
-    if (req.file) {
-      const [pic] = req.attachments // or full path if needed
-      updateData.profilePic = pic;
+    // Build update payload from body (only allow known fields)
+    const updateData = {};
+    if (typeof req.body.username === "string") updateData.username = req.body.username;
+    if (typeof req.body.bio === "string") updateData.bio = req.body.bio;
+
+    // If a new image was uploaded by your upload middleware
+    let newPic;
+    if (Array.isArray(req.attachments) && req.attachments.length) {
+      [newPic] = req.attachments;
+      // Expecting { url, publicId } from your Cloudinary middleware
+      updateData.profilePic = { url: newPic.url, publicId: newPic.publicId };
     }
 
-    let updatedUser;
-    const oldUser = await User.findById(userId).select('profilePic');
-    switch(userRole){
-      case "user": updatedUser = await User.findByIdAndUpdate(
-                   userId,
-                   { $set: updateData },
-                   { new: true, runValidators: true, overwriteDiscriminatorKey: true }
-                  );break;
-      case "creator": updatedUser = await Creator.findByIdAndUpdate(
-                    userId,
-                    { $set: updateData},
-                    { new: true, runValidators: true, overwriteDiscriminatorKey: true }
-                  );
+    const Model = role === "creator" ? Creator : User;
+
+    // Fetch current pic to decide if we should delete it after update
+    const oldUser = await Model.findById(userId).select("profilePic");
+    if (!oldUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    await updatedUser.save();
-    if(oldUser.profilePic.publicId)deleteImage(oldUser.profilePic.publicId);
-    return res.json({ success: true, user: updatedUser.role });
+    const updatedUser = await Model.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    // If we uploaded a new pic, delete the old one (if it existed and is different)
+    if (
+      newPic &&
+      oldUser.profilePic?.publicId &&
+      oldUser.profilePic.publicId !== newPic.publicId
+    ) {
+      try {
+        await deleteImage(oldUser.profilePic.publicId);
+      } catch (e) {
+        console.warn("Failed to delete old image:", e.message);
+      }
+    }
+
+    return res.json({ success: true, user: updatedUser });
   } catch (error) {
     console.error(error);
-    const [pic] = req.attachments;
-    deleteImage(pic.publicId);
-    return res.status(500).json({success: false, message: "Update Failed"});
+
+    // Roll back newly uploaded image if anything failed AFTER upload
+    try {
+      if (Array.isArray(req.attachments) && req.attachments.length) {
+        await deleteImage(req.attachments[0].publicId);
+      }
+    } catch (e) {
+      console.warn("Rollback image delete failed:", e.message);
+    }
+
+    return res.status(500).json({ success: false, message: "Update Failed", error: error.message });
   }
 };
+
 
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

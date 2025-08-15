@@ -5,6 +5,8 @@ import Footer from './Footer';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../AuthContext';
 
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
+
 const LoginPage = ({ isDarkMode, toggleTheme }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '', name: '' });
@@ -23,30 +25,56 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
     e.preventDefault();
     setError('');
 
-    const endpoint = isLogin
-      ? 'http://localhost:3002/api/auth/login'
-      : 'http://localhost:3002/api/auth/register';
+    const endpoint = isLogin ? `${API}/auth/login` : `${API}/auth/register`;
 
     const payload = isLogin
       ? { email: formData.email, password: formData.password }
-      : { username: formData.name, email: formData.email, password: formData.password, confirmPassword: formData.confirmPassword };
+      : {
+          username: formData.name,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword
+        };
 
     try {
-      const { data } = await axios.post(endpoint, payload, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+  const { data } = await axios.post(endpoint, payload, {
+    headers: { 'Content-Type': 'application/json' }
+  });
 
-      const { token, user } = data;
+  const { token, user } = data;
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-      // 🔐 update global auth state (saves token+user & sets axios header)
-      login(token, user);
+  if (isLogin) {
+    // normal login
+    login(token, user);
+    navigate(from, { replace: true });
+  } else {
+    // REGISTER FLOW
+    let me = user;
 
-      // 🔁 send them back to where they came from (ProtectedRoute) or home
-      navigate(from, { replace: true });
-    } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.message || 'Something went wrong!');
+    // some backends don't return full user on register; fetch, then ensure email
+    if (!me) {
+      try {
+        const { data: meData } = await axios.get(`${API}/private/dashboard`);
+        me = meData;
+      } catch {
+        me = {}; // fallback
+      }
     }
+
+    // ✅ guarantee email is present for EditProfile
+    me = { ...me, email: me?.email || formData.email };
+
+    // store in auth state/localStorage
+    login(token, me);
+
+    // go to onboarding edit page
+    navigate("/edit-profile", { replace: true, state: { onboarding: true } });
+  }
+} catch (err) {
+  console.error(err);
+  setError(err.response?.data?.message || 'Something went wrong!');
+}
   };
 
   return (
@@ -67,13 +95,13 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
           {error && <div className="mb-4 text-sm text-red-500">{error}</div>}
 
           <div className="flex bg-gray-100 rounded-lg p-1 mb-8">
-            <button 
+            <button
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 ${isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
               onClick={() => setIsLogin(true)}
             >
               Login
             </button>
-            <button 
+            <button
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-300 ${!isLogin ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
               onClick={() => setIsLogin(false)}
             >
@@ -162,8 +190,8 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
               </div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className={`w-full py-3 px-4 rounded-lg font-medium transition-colors duration-300 ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
             >
               {isLogin ? 'Sign In' : 'Create Account'}
@@ -173,7 +201,7 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
           <div className="mt-8 text-center">
             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button 
+              <button
                 className={`font-medium hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
                 onClick={() => setIsLogin(!isLogin)}
               >
