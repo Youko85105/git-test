@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getCreatorPosts } from '../services/posts';
-import CommentsSection from './CommentsSection';
 import Navbar from './Navbar';
+import PostCard from "./PostCard";
 
 // lightweight inline icons (no library)
 const Icon = {
@@ -35,9 +35,9 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
   const [postsLoading, setPostsLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // UI state (local only for now)
-  const [openComments, setOpenComments] = useState({});     // { [postId]: boolean }
-  const [likeState, setLikeState] = useState({});           // { [postId]: { liked:boolean, count:number } }
+  // // UI state (local only for now)
+  // const [openComments, setOpenComments] = useState({});     // { [postId]: boolean }
+  // const [likeState, setLikeState] = useState({});           // { [postId]: { liked:boolean, count:number } }
 
   // 1) public creator profile
   useEffect(() => {
@@ -77,39 +77,37 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
     return () => { alive = false; };
   }, [id]);
 
-  useEffect(() => {
-    setOpenComments({});
-    setLikeState({});
-  }, [id]);
+  // useEffect(() => {
+  //   setOpenComments({});
+  //   setLikeState({});
+  // }, [id]);
 
-  if (creatorLoading) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
-        Loading creator...
-      </div>
-    );
-  }
+  // if (creatorLoading) {
+  //   return (
+  //     <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
+  //       Loading creator...
+  //     </div>
+  //   );
+  // }
 
-  // Helpers
-  const getLikeInfo = (post) => {
-    const pid = post._id || post.id;
-    const local = likeState[pid] || {};
-    const baseCount = typeof post.likeCount === 'number' ? post.likeCount : 0;
-    return {
-      liked: local.liked ?? post.likedByMe ?? false,
-      count: local.count ?? baseCount,
-    };
-  };
-  const toggleComment = (postId) =>
-    setOpenComments((prev) => ({ ...prev, [postId]: !prev[postId] }));
+  // // Helpers
+  // const getLikeInfo = (post) => {
+  //   const pid = post._id || post.id;
+  //   const local = likeState[pid] || {};
+  //   const baseCount = typeof post.likeCount === 'number' ? post.likeCount : 0;
+  //   return {
+  //     liked: local.liked ?? post.likedByMe ?? false,
+  //     count: local.count ?? baseCount,
+  //   };
+  // };
 
-  const toggleLike = (post) => {
-    const pid = post._id || post.id;
-    const { liked, count } = getLikeInfo(post);
-    const next = { liked: !liked, count: Math.max(0, count + (liked ? -1 : 1)) };
-    setLikeState((prev) => ({ ...prev, [pid]: next }));
-    // later: call like/unlike API and handle errors (revert if needed)
-  };
+  // const toggleLike = (post) => {
+  //   const pid = post._id || post.id;
+  //   const { liked, count } = getLikeInfo(post);
+  //   const next = { liked: !liked, count: Math.max(0, count + (liked ? -1 : 1)) };
+  //   setLikeState((prev) => ({ ...prev, [pid]: next }));
+  //   // later: call like/unlike API and handle errors (revert if needed)
+  // };
 
   if (creatorError || !creator) {
     return (
@@ -245,71 +243,21 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
               <div className="space-y-6">
                 {posts.map((post) => {
                   const pid = post._id || post.id;
-                  const likeInfo = getLikeInfo(post);
-                  const commentsOpen = !!openComments[pid];
-                  const attachments = Array.isArray(post.attachments) ? post.attachments : [];
 
                   return (
-                    <div
+                    <PostCard
                       key={pid}
-                      className={`p-6 rounded-xl shadow border ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
-                    >
-                      <h3 className="text-xl font-bold mb-2">{post.title}</h3>
-                      <p className="whitespace-pre-wrap">{post.content || post.body}</p>
+                      post={post}
+                      author={{
+                        _id: creator._id || creator.id,
+                        username: creator.username || creator.name,
+                        handle: creator.handle,
+                        profilePic: creator.profilePic,
+                      }}
+                      isDarkMode={isDarkMode}
+                      // onLikeToggle={() => toggleLike(post)}
+                    />
 
-                      {/* Attachments gallery (Cloudinary) */}
-                      {attachments.length > 0 && (
-                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {attachments.map((att, i) => (
-                            <a key={att.publicId || i} href={att.url} target="_blank" rel="noreferrer" className="block group">
-                              <div className="relative w-full overflow-hidden rounded-xl border
-                        aspect-[4/3] bg-gray-100 dark:bg-gray-800">
-                                <img
-                                  src={att.url}
-                                  alt={`attachment ${i + 1}`}
-                                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                />
-                              </div>
-                            </a>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Action bar */}
-                      <div className="mt-4 flex flex-wrap gap-3 text-sm">
-                        <button
-                          onClick={() => toggleLike(post)}
-                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition ${likeInfo.liked
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : isDarkMode
-                              ? 'border-gray-600 hover:bg-gray-700 text-gray-200'
-                              : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-                            }`}
-                          aria-pressed={likeInfo.liked}
-                        >
-                          <Icon.Heart />
-                          {likeInfo.liked ? 'Liked' : 'Like'}{likeInfo.count ? ` • ${likeInfo.count}` : ''}
-                        </button>
-
-                        <button
-                          onClick={() => toggleComment(pid)}
-                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition ${isDarkMode ? 'border-gray-600 hover:bg-gray-700 text-gray-200' : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-                            }`}
-                          aria-expanded={commentsOpen}
-                        >
-                          <Icon.Message />
-                          {commentsOpen ? 'Hide comments' : 'Comment'}
-                        </button>
-                      </div>
-
-                      {/* Comments drawer */}
-                      {commentsOpen && (
-                        <div className="mt-5">
-                          <CommentsSection postId={pid} title="Comments" />
-                        </div>
-                      )}
-                    </div>
                   );
                 })}
               </div>

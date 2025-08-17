@@ -9,54 +9,54 @@ import Like from "../models/like.model.js";
 import { notify } from "../services/notifications.js";
 
 export const createPost = async (req, res) => {
-  checkAuthorization(req, res);
+    checkAuthorization(req, res);
 
-  const actorId = req.user.id;            // creator
-  const postData = { ...req.body, author: new mongoose.Types.ObjectId(actorId) };
+    const actorId = req.user.id;            // creator
+    const postData = { ...req.body, author: new mongoose.Types.ObjectId(actorId) };
 
-  postData.attachments = postData.attachments || [];
-  if (Array.isArray(req.files)) postData.attachments = req.attachments || [];
+    postData.attachments = postData.attachments || [];
+    if (Array.isArray(req.files)) postData.attachments = req.attachments || [];
 
-  if (req.user.role !== "creator") {
-    postData.attachments.forEach(pic => deleteImage(pic.publicId));
-    return res.status(401).json({ message: "Unauthorized access" });
-  }
-
-  try {
-    // 1) Create the post
-    const newPost = await new Post(postData).save();
-
-    // 2) Notify active subscribers (don’t fail the request if this hiccups)
-    try {
-      const subs = await Subscription.find({ creatorId: actorId, active: true })
-        .select("subscriberId")
-        .lean();
-
-      const creatorName = req.user?.username || "A creator you follow";
-
-      await Promise.all(
-        subs.map(s =>
-          notify({
-            userId: s.subscriberId,
-            actorId,                         // who caused it
-            type: "post:new",
-            message: `${creatorName} posted a new update`,
-            metadata: {
-    postId: newPost._id,
-    creatorId: actorId,
-    link: `/post/${newPost._id}`, // direct to post
-  },
-          })
-        )
-      );
-    } catch (nErr) {
-      console.warn("notify(post:new) failed:", nErr);
+    if (req.user.role !== "creator") {
+        postData.attachments.forEach(pic => deleteImage(pic.publicId));
+        return res.status(401).json({ message: "Unauthorized access" });
     }
 
-    return res.status(201).json({ message: "Post created successfully", post: newPost });
-  } catch (error) {
-    return res.status(501).json({ message: error });
-  }
+    try {
+        // 1) Create the post
+        const newPost = await new Post(postData).save();
+
+        // 2) Notify active subscribers (don’t fail the request if this hiccups)
+        try {
+            const subs = await Subscription.find({ creatorId: actorId, active: true })
+                .select("subscriberId")
+                .lean();
+
+            const creatorName = req.user?.username || "A creator you follow";
+
+            await Promise.all(
+                subs.map(s =>
+                    notify({
+                        userId: s.subscriberId,
+                        actorId,                         // who caused it
+                        type: "post:new",
+                        message: `${creatorName} posted a new update`,
+                        metadata: {
+                            postId: newPost._id,
+                            creatorId: actorId,
+                            link: `/post/${newPost._id}`, // direct to post
+                        },
+                    })
+                )
+            );
+        } catch (nErr) {
+            console.warn("notify(post:new) failed:", nErr);
+        }
+
+        return res.status(201).json({ message: "Post created successfully", post: newPost });
+    } catch (error) {
+        return res.status(501).json({ message: error });
+    }
 };
 
 export const getAllPosts = async (req, res) => {
@@ -70,7 +70,31 @@ export const getAllPosts = async (req, res) => {
     if (!creator) {    //show a creator his own posts on dashboard
         try {
             const posts = await Post.find({ author: user });
-            return res.status(200).json(posts);
+            const postIds = posts.map(p => p._id);
+
+            // counts for each post
+            const counts = await PostLike.aggregate([
+                { $match: { postId: { $in: postIds } } },
+                { $group: { _id: "$postId", n: { $sum: 1 } } }
+            ]);
+
+            const countMap = new Map(counts.map(c => [String(c._id), c.n]));
+
+            // which of these posts the current user liked
+            const liked = await PostLike.find(
+                { postId: { $in: postIds }, subscriberId: user },
+                { postId: 1, _id: 0 }
+            ).lean();
+            const likedSet = new Set(liked.map(d => String(d.postId)));
+
+            const withLikes = posts.map(p => ({
+                ...p.toObject(),
+                likeCount: countMap.get(String(p._id)) || 0,
+                likedByMe: likedSet.has(String(p._id))
+            }));
+
+            return res.status(200).json(withLikes); // ← return the decorated list
+
         } catch (error) {
             return res.status(404).json({ message: error });
         }
@@ -78,7 +102,31 @@ export const getAllPosts = async (req, res) => {
         try {
             console.log("subscribed");
             const posts = await Post.find({ author: creator });
-            return res.status(200).json(posts);
+            const postIds = posts.map(p => p._id);
+
+            // counts for each post
+            const counts = await PostLike.aggregate([
+                { $match: { postId: { $in: postIds } } },
+                { $group: { _id: "$postId", n: { $sum: 1 } } }
+            ]);
+
+            const countMap = new Map(counts.map(c => [String(c._id), c.n]));
+
+            // which of these posts the current user liked
+            const liked = await PostLike.find(
+                { postId: { $in: postIds }, subscriberId: user },
+                { postId: 1, _id: 0 }
+            ).lean();
+            const likedSet = new Set(liked.map(d => String(d.postId)));
+
+            const withLikes = posts.map(p => ({
+                ...p.toObject(),
+                likeCount: countMap.get(String(p._id)) || 0,
+                likedByMe: likedSet.has(String(p._id))
+            }));
+
+            return res.status(200).json(withLikes); // ← return the decorated list
+
         } catch (error) {
             return res.status(404).json({ message: error });
         }
@@ -150,31 +198,47 @@ export const deletePost = async (req, res) => {
     }
 };
 
+// controllers/post.js (or wherever togglePostLike lives)
 export const togglePostLike = async (req, res) => {
-  try {
-    checkAuthorization(req, res);
-    const userId = req.user.id;
-    const { postId } = req.params;
+    try {
+        checkAuthorization(req, res);
+        const userId = req.user.id;
+        const { postId } = req.params;
 
-    const post = await Post.findById(postId).select('author');
-    if (!post) return res.status(404).json({ message: 'Post not found' });
+        const post = await Post.findById(postId).select('author');
+        if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    const allowed = await isSubscribed(userId, post.author);
-    if (!allowed) return res.status(401).json({ message: 'Unauthorized access' });
+        const allowed = await isSubscribed(userId, post.author);
+        if (!allowed) return res.status(401).json({ message: 'Unauthorized access' });
 
-    const existing = await PostLike.findOne({ postId, subscriberId: userId });
-    if (existing) {
-      await existing.deleteOne();
-      return res.status(200).json({ liked: false });
+        const existing = await PostLike.findOne({ postId, subscriberId: userId });
+        let liked;
+
+        if (existing) {
+            await existing.deleteOne();
+            liked = false;
+        } else {
+            await PostLike.create({ postId, subscriberId: userId });
+            liked = true;
+        }
+
+        // 👇 authoritative count after the mutation
+        const likeCount = await PostLike.countDocuments({ postId });
+
+        // (optional) discourage caches on “read after write”
+        res.set('Cache-Control', 'no-store');
+
+        return res.status(200).json({ liked, likeCount });
+    } catch (err) {
+        if (err?.code === 11000) {
+            const likeCount = await PostLike.countDocuments({ postId: req.params.postId });
+            return res.status(200).json({ liked: true, likeCount });
+        }
+        return res.status(500).json({ message: err?.message || 'Server error' });
     }
-
-    await PostLike.create({ postId, subscriberId: userId });
-    return res.status(201).json({ liked: true });
-  } catch (err) {
-    if (err?.code === 11000) return res.status(200).json({ liked: true });
-    return res.status(500).json({ message: err?.message || 'Server error' });
-  }
 };
+
+
 
 
 
@@ -191,6 +255,12 @@ export const getPostWithComments = async (req, res) => {
         console.log("Populated author:", post.author);
         console.log("📌 Post found:", post);
         if (!post) return res.status(404).json({ error: 'Post not found' });
+
+        // ✅ post likes
+        const [likeCount, likedByMeDoc] = await Promise.all([
+            PostLike.countDocuments({ postId }),
+            userId ? PostLike.exists({ postId, subscriberId: userId }) : Promise.resolve(null),
+        ]);
 
         const comments = await Comment.find({ postId: new mongoose.Types.ObjectId(postId) })
             .sort({ createdAt: 1 })
@@ -215,6 +285,8 @@ export const getPostWithComments = async (req, res) => {
         return res.status(200).json({
             post: {
                 ...post.toObject(),
+                likeCount,                      // ← ADD
+                likedByMe: !!likedByMeDoc,
                 author: {
                     id: post.author._id,
                     name: post.author.username,

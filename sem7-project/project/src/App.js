@@ -39,9 +39,9 @@ function App() {
           <Route path="/facts" element={<FactsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/about" element={<AboutPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/login" element={<LoginPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
-          <Route path="/creator/:id" element={<CreatorProfile isDarkMode={isDarkMode} />} />
-          <Route path="/creators" element={<CreatorsPage isDarkMode={isDarkMode} />} />
-          <Route path="/success" element={<SubscribeSuccess isDarkMode={isDarkMode} />} />
+          <Route path="/creator/:id" element={<CreatorProfile isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+          <Route path="/creators" element={<CreatorsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+          <Route path="/success" element={<SubscribeSuccess isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
         <Route
           path="/cancel"
           element={

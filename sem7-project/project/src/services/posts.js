@@ -16,6 +16,44 @@ export function getPostDetail(postId) {
   return makeRequest(`/private/post/detail/${postId}`);
 }
 
+// src/services/posts.js
+export async function togglePostLike(postId) {
+  const token = localStorage.getItem("token") || "";
+
+  const res = await fetch(
+    `http://localhost:3002/api/private/post/togglepostlike/${postId}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    }
+  );
+
+  // Handle common failures explicitly
+  if (res.status === 401) {
+    const err = new Error("UNAUTHORIZED");
+    err.status = 401;
+    throw err;
+  }
+  if (!res.ok) {
+    // Surface body message for debugging
+    let message = "Request failed";
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch {}
+    const err = new Error(message);
+    err.status = res.status;
+    throw err;
+  }
+
+  // Success (your API returns { liked: boolean })
+  return res.json();
+}
+
+
 /** ---- Backward-compat shims so old imports don't break ---- */
 export const getPost = getPostDetail;  // old name -> new route
 export const getPosts = getMyPosts;    // old ambiguous name -> "my posts"

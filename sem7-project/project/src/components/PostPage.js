@@ -1,39 +1,31 @@
+// src/components/PostPage.js
 import React, { useEffect, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { usePost } from "../contexts/PostContext";
-import CommentList from "./CommentList";
+import CommentsSection from "./CommentsSection";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import PostCard from "./PostCard";
 
 const PostPage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
   const location = useLocation();
   const [search] = useSearchParams();
+
   const [highlightedCommentId, setHighlightedCommentId] = useState(null);
+  const [author, setAuthor] = useState(null); // ← same pattern as CreatorProfile
 
-  const {
-    post,
-    postId,
-    comments,
-    getReplies,
-    createComment,
-    updateComment,
-    deleteComment,
-    toggleCommentLike,
-    currentUser,
-    loading,
-  } = usePost();
+  const { post, postId, comments, loading } = usePost();
 
-  // Read highlight target from state (preferred) or query (?comment= / ?highlight=)
+  // Pick up highlight from state or query (?comment=/ ?highlight=)
   useEffect(() => {
     const fromState = location.state?.highlightCommentId || null;
     const fromQuery = search.get("comment") || search.get("highlight") || null;
     setHighlightedCommentId(fromState || fromQuery);
   }, [location.state, search]);
 
-  // Optional: smooth-scroll to the highlighted comment when comments load
+  // Smooth-scroll to highlighted comment after comments load
   useEffect(() => {
     if (!highlightedCommentId || !comments?.length) return;
-    // Try two common hooks the comment item might expose:
     const el =
       document.querySelector(`[data-comment-id="${highlightedCommentId}"]`) ||
       document.getElementById(`comment-${highlightedCommentId}`);
@@ -44,29 +36,58 @@ const PostPage = ({ isDarkMode, toggleTheme, isLoggedIn, logout }) => {
     }
   }, [highlightedCommentId, comments]);
 
-  if (!post) return <div className="text-center mt-10">Loading post...</div>;
+  // Load author like CreatorProfile does:
+  // - if the post already has a populated author object, use it
+  // - else, fetch the public creator by id once and store it
+  useEffect(() => {
+    if (!post) return;
+
+    const objAuthor =
+      (post.author && typeof post.author === "object" ? post.author : null) ||
+      (post.creator && typeof post.creator === "object" ? post.creator : null);
+
+    if (objAuthor && (objAuthor?.profilePic?.url || typeof objAuthor?.profilePic === "string")) {
+      setAuthor(objAuthor);
+      return;
+    }
+
+    const authorId =
+      objAuthor?._id ||
+      objAuthor?.id ||
+      post.authorId ||
+      post.creatorId ||
+      (typeof post.author === "string" ? post.author : null) ||
+      (typeof post.creator === "string" ? post.creator : null);
+
+    if (!authorId) {
+      setAuthor(null);
+      return;
+    }
+
+    fetch(`http://localhost:3002/api/public/creator/${authorId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setAuthor(data);
+      })
+      .catch(() => {});
+  }, [post]);
+
+  if (loading) return <div className="text-center mt-10">Loading post...</div>;
+  if (!post) return <div className="text-center mt-10">Post not found</div>;
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
       <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} isLoggedIn={isLoggedIn} logout={logout} />
       <main className="max-w-2xl mx-auto py-12 px-4">
-        <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
-        <p className="text-muted-foreground mb-6">{post.body}</p>
-
-        <hr className="my-6" />
-        <h2 className="text-2xl font-semibold mb-4">Comments</h2>
-        <CommentList
-          comments={comments || []}
-          postId={postId}
-          getReplies={getReplies}
-          onReply={createComment}
-          onUpdate={updateComment}
-          onDelete={deleteComment}
-          onToggleLike={toggleCommentLike}
-          currentUser={currentUser}
-          loading={loading}
+        <PostCard
+          post={post}
+          author={author}               // ← same idea as CreatorProfile
+          isDarkMode={isDarkMode}
           highlightId={highlightedCommentId}
-        />
+        >
+          <CommentsSection postId={postId} title="Comments" highlightId={highlightedCommentId} />
+        </PostCard>
       </main>
       <Footer isDarkMode={isDarkMode} />
     </div>

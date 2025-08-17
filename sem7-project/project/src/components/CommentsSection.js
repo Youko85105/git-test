@@ -11,7 +11,7 @@ import {
   getCurrentUser
 } from '../services/comments';
 
-export default function CommentsSection({ postId, title = "Comments" }) {
+export default function CommentsSection({ postId, title = "Comments", highlightId }) {
   const [comments, setComments] = useState([]);
     const [currentUser, setCurrentUser] = useState(null); // Real user
   
@@ -195,6 +195,7 @@ function onCommentReply({ postId, message, parentId }) {
             getReplies={getReplies}
             currentUser={currentUser}
             loading={loading}
+             highlightId={highlightId}   // ✅ pass it through
           />
         </div>
       )}

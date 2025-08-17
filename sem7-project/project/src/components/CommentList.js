@@ -2,7 +2,7 @@ import React from "react";
 import Comment from "./Comment";
 
 function CommentWrapper({ comment, postId, highlightId, ...props }) {
-  const isHighlighted = comment._id === highlightId;
+  const isHighlighted = String(comment._id) === String(highlightId);
   const commentRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -13,6 +13,8 @@ function CommentWrapper({ comment, postId, highlightId, ...props }) {
 
   return (
     <div
+    id={`comment-${comment._id}`}
+    data-comment-id={comment._id}
       ref={isHighlighted ? commentRef : null}
       className={`comment-stack transition duration-300 ${
         isHighlighted ? "bg-yellow-100 border-l-4 border-yellow-500 rounded-md shadow" : ""
