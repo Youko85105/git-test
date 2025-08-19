@@ -19,7 +19,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
   const [postsLoading, setPostsLoading] = useState(true);
   const [postsError, setPostsError] = useState(null);
 
-    // ✅ Fetch posts only when logged in, and re-run when login state changes
+  // ✅ Fetch posts only when logged in, and re-run when login state changes
   useEffect(() => {
     const fetchPosts = async () => {
       if (!isLoggedIn) {
@@ -73,7 +73,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
       } catch {
         // Fallback: your old local endpoint
         try {
-          const urlFallback = 'http://localhost:3002/api/creators';
+          const urlFallback = 'http://localhost:5001/api/public/creator/all';
           const res = await fetch(urlFallback);
           if (!res.ok) throw new Error('Failed to fetch creators');
           const data = await res.json();
@@ -88,7 +88,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
     fetchCreators();
   }, []);
 
- return (
+  return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
       <Navbar isDarkMode={isDarkMode} toggleTheme={toggleTheme} /> {/* ✅ no auth props */}
       {/* Hero Section */}
@@ -144,7 +144,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
         </div>
       </div>
 
-       {/* Some Creators Section */}
+      {/* Some Creators Section */}
       <div className={`py-16 px-8 transition-colors duration-300 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
@@ -198,7 +198,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
         </div>
       </div>
 
-       {/* FAQ Section */}
+      {/* FAQ Section */}
       <div className={`py-16 px-8 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">

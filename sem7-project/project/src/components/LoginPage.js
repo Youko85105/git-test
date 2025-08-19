@@ -5,7 +5,7 @@ import Footer from './Footer';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../AuthContext';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 const LoginPage = ({ isDarkMode, toggleTheme }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -30,51 +30,51 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
     const payload = isLogin
       ? { email: formData.email, password: formData.password }
       : {
-          username: formData.name,
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword
-        };
+        username: formData.name,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword
+      };
 
     try {
-  const { data } = await axios.post(endpoint, payload, {
-    headers: { 'Content-Type': 'application/json' }
-  });
+      const { data } = await axios.post(endpoint, payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-  const { token, user } = data;
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      const { token, user } = data;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-  if (isLogin) {
-    // normal login
-    login(token, user);
-    navigate(from, { replace: true });
-  } else {
-    // REGISTER FLOW
-    let me = user;
+      if (isLogin) {
+        // normal login
+        login(token, user);
+        navigate(from, { replace: true });
+      } else {
+        // REGISTER FLOW
+        let me = user;
 
-    // some backends don't return full user on register; fetch, then ensure email
-    if (!me) {
-      try {
-        const { data: meData } = await axios.get(`${API}/private/dashboard`);
-        me = meData;
-      } catch {
-        me = {}; // fallback
+        // some backends don't return full user on register; fetch, then ensure email
+        if (!me) {
+          try {
+            const { data: meData } = await axios.get(`${API}/private/dashboard`);
+            me = meData;
+          } catch {
+            me = {}; // fallback
+          }
+        }
+
+        // ✅ guarantee email is present for EditProfile
+        me = { ...me, email: me?.email || formData.email };
+
+        // store in auth state/localStorage
+        login(token, me);
+
+        // go to onboarding edit page
+        navigate("/edit-profile", { replace: true, state: { onboarding: true } });
       }
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Something went wrong!');
     }
-
-    // ✅ guarantee email is present for EditProfile
-    me = { ...me, email: me?.email || formData.email };
-
-    // store in auth state/localStorage
-    login(token, me);
-
-    // go to onboarding edit page
-    navigate("/edit-profile", { replace: true, state: { onboarding: true } });
-  }
-} catch (err) {
-  console.error(err);
-  setError(err.response?.data?.message || 'Something went wrong!');
-}
   };
 
   return (

@@ -9,7 +9,7 @@ const FactsPage = ({ isDarkMode, toggleTheme }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:3002/api/creators')
+    fetch('http://localhost:5001/api/public/creator/all')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch creators');
         return res.json();
@@ -53,13 +53,13 @@ const FactsPage = ({ isDarkMode, toggleTheme }) => {
           <h2 className={`text-3xl font-bold mb-8 text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Featured Creators</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {creators.map((creator) => (
-              <div 
-                key={creator._id || creator.id} 
+              <div
+                key={creator._id || creator.id}
                 className={`rounded-2xl overflow-hidden shadow-lg transition-all duration-300 hover:-translate-y-1 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}
               >
                 <div className="relative">
-                  <img 
-                    src={creator.profilePic?.url || '/images/creator.jpg'} 
+                  <img
+                    src={creator.profilePic?.url || '/images/creator.jpg'}
                     alt={creator.username || creator.name}
                     className="w-full h-64 object-cover"
                     onError={(e) => {
@@ -85,12 +85,11 @@ const FactsPage = ({ isDarkMode, toggleTheme }) => {
                       ))}
                     </ul>
                   </div>
-                  <button 
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 ${
-                      subscribedCreators.includes(creator._id || creator.id) 
-                        ? 'bg-green-600 text-white hover:bg-green-700' 
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    }`}
+                  <button
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-all duration-300 ${subscribedCreators.includes(creator._id || creator.id)
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
                     onClick={() => handleSubscribe(creator._id || creator.id)}
                   >
                     {subscribedCreators.includes(creator._id || creator.id) ? 'Subscribed ✓' : `Subscribe $${creator.fee || creator.monthlyPrice}/mo`}

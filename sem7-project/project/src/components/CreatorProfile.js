@@ -83,7 +83,7 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
     let alive = true;
     setCreatorLoading(true);
 
-    fetch(`http://localhost:3002/api/public/creator/${id}`)
+    fetch(`http://localhost:5001/api/public/creator/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch creator');
         return res.json();
@@ -170,7 +170,7 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
       }
 
       // ⚠️ Use the EXACT path your server exposes (match your Postman tab)
-      const res = await fetch(`http://localhost:3002/api/private/subscribe/${id}`, {
+      const res = await fetch(`http://localhost:5001/api/private/subscribe/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
