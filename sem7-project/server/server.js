@@ -36,7 +36,6 @@ app.get('/', (req, res) => {
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
-app.use(bodyParser.raw({ type: 'application/json' }));
 
 // ✅ MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {

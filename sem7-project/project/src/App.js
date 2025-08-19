@@ -14,7 +14,8 @@ import CreatorsPage from './components/CreatorsPage';
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import SubscribeSuccess from "./components/SubscribeSuccess";
-
+import ForgotPassword from "./components/ForgotPassword";
+import ResetPassword from "./components/ResetPassword";
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -42,6 +43,8 @@ function App() {
           <Route path="/creator/:id" element={<CreatorProfile isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/creators" element={<CreatorsPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/success" element={<SubscribeSuccess isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+          <Route path="/forgot-password" element={<ForgotPassword isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+          <Route path="/reset-password" element={<ResetPassword isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
         <Route
           path="/cancel"
           element={

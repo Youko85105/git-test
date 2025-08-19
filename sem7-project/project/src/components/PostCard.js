@@ -80,8 +80,8 @@ export default function PostCard({
   const createdLabel = useMemo(() => timeAgo(createdAt) || (createdAt ? new Date(createdAt).toLocaleString() : ""), [createdAt]);
 
   const textMuted = isDarkMode ? "text-gray-300" : "text-gray-600";
-  const cardClasses = `p-5 sm:p-6 rounded-xl shadow border ${
-    isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+  const cardClasses = `relative p-5 sm:p-6 rounded-2xl backdrop-blur shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-0.5 ${
+    isDarkMode ? "bg-gray-800/90 border border-gray-700" : "bg-white/90 border border-gray-200"
   }`;
 
   const toggleComment = () => setOpenComments((v) => !v);
@@ -120,13 +120,14 @@ export default function PostCard({
     }
   };
   return (
-    <article className={cardClasses}>
+    <article className="group relative rounded-2xl p-[1px] bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-pink-600/20 hover:from-blue-600/30 hover:via-purple-600/30 hover:to-pink-600/30 transition-colors duration-300">
+      <div className={cardClasses}>
       {/* Header: avatar, author, time */}
       <header className="flex items-start gap-3 mb-3">
         <img
           src={avatar}
           alt={authorName}
-          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white dark:ring-gray-900"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover ring-2 ring-white/60 dark:ring-gray-900/60 ring-offset-2 ring-offset-transparent transition-transform duration-300 group-hover:scale-[1.02]"
           onError={(e) => (e.currentTarget.src = "/images/creator.jpg")}
         />
         <div className="min-w-0">
@@ -198,11 +199,11 @@ export default function PostCard({
           onClick={handleLikeClick}
           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition ${
             liked
-              ? "bg-blue-600 text-white border-blue-600"
+              ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20"
               : isDarkMode
               ? "border-gray-600 hover:bg-gray-700 text-gray-200"
               : "border-gray-300 hover:bg-gray-50 text-gray-700"
-          }`}
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50`}
           aria-pressed={liked}
         >
           <Icon.Heart />
@@ -216,7 +217,7 @@ export default function PostCard({
             isDarkMode
               ? "border-gray-600 hover:bg-gray-700 text-gray-200"
               : "border-gray-300 hover:bg-gray-50 text-gray-700"
-          }`}
+          } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50`}
           aria-expanded={openComments}
         >
           <Icon.Message />
@@ -230,6 +231,7 @@ export default function PostCard({
           <CommentsSection postId={post?._id || post?.id} title="Comments" highlightId={highlightId} />
         </div>
       )}
+      </div>
     </article>
   );
 }
