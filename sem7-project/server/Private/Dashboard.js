@@ -3,30 +3,31 @@ import Base from "../models/Base.js";
 import Subscription from "../models/Subscription.js"
 import dotenv from "dotenv";
 import Stripe from "stripe";
-import  User  from "../models/User.js";
+import User from "../models/User.js";
 import { Creator } from "../models/Creator.js";
+import Post from "../models/Post.js";
 import { handleExistingCreator, handleStripeError } from "../Util/StripeHandler.js";
 import { checkAuthorization } from "./Authorization.js";
 import { deleteImage } from "../Util/CloudinaryUpload.js";
 
-export const getBookMarks = async (req,res) => {
-  try{
-    checkAuthorization(req,res);
+export const getBookMarks = async (req, res) => {
+  try {
+    checkAuthorization(req, res);
     let user;
-    switch(req.user.role){
-      case "user" : user = User.findById(req.user.id).select('bookMarks');break;
-      case "creator" : user = User.findById(req.user.id).select('bookMarks');break;
-      default : return res.status(404).json({message : "Requested data not found"});
+    switch (req.user.role) {
+      case "user": user = User.findById(req.user.id).select('bookMarks'); break;
+      case "creator": user = User.findById(req.user.id).select('bookMarks'); break;
+      default: return res.status(404).json({ message: "Requested data not found" });
     }
-    return res.status(200).json({bookMarks : user.bookMarks});
-  }catch(error){
-    return res.status(500).json({message : error});
+    return res.status(200).json({ bookMarks: user.bookMarks });
+  } catch (error) {
+    return res.status(500).json({ message: error });
   }
 };
 
 export async function getDashboardData(req, res) {
   try {
-    checkAuthorization(req,res);
+    checkAuthorization(req, res);
     const userId = req.user.id;
     const userRole = req.user.role;
 
@@ -49,6 +50,18 @@ export async function getDashboardData(req, res) {
         detailedUser.subscribers = await getFans(userId);
         break;
 
+      case "admin":
+        detailedUser = await Base.findById(userId)
+          .select("username profilePic bio role email")
+          .lean();
+        // Admin doesn't need subscriptions, but let's add platform stats
+        detailedUser.platformStats = {
+          totalUsers: await User.countDocuments(),
+          totalCreators: await Creator.countDocuments(),
+          totalPosts: await Post.countDocuments(),
+        };
+        break;
+
       default:
         return res.status(400).json({ message: "Unknown user role." });
     }
@@ -61,7 +74,7 @@ export async function getDashboardData(req, res) {
     return res.status(200).json(detailedUser);
 
   } catch (err) {
-    return res.status(500).json({ message: err});
+    return res.status(500).json({ message: err });
   }
 };
 
@@ -177,10 +190,10 @@ export const updateDashboardData = async (req, res) => {
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-export const upgradeToCreator = async (req,res) => {
-  checkAuthorization(req,res);
+export const upgradeToCreator = async (req, res) => {
+  checkAuthorization(req, res);
   const userId = req.user.id;
-  let upgradeData = {...req.body}
+  let upgradeData = { ...req.body }
 
   const user = await Base.findById(userId);
   if (!user) return res.status(404).json({ message: "User not found." });
@@ -190,7 +203,7 @@ export const upgradeToCreator = async (req,res) => {
     return handleExistingCreator(user, res);
   }
 
-  try{
+  try {
 
     const stripeAccount = await stripe.accounts.create({
       type: "express",
@@ -207,7 +220,8 @@ export const upgradeToCreator = async (req,res) => {
 
     const creator = await User.findByIdAndUpdate(
       userId,
-      { role: "creator",
+      {
+        role: "creator",
         payoutInfo: stripeAccount.id,
         onboardingComplete: false,
         $set: upgradeData
@@ -229,7 +243,7 @@ export const upgradeToCreator = async (req,res) => {
       creator: creator,
       onboardingComplete: false
     });
-  }catch(err){
+  } catch (err) {
     console.error("Update error:", err);
     return handleStripeError(err, res);
   }
