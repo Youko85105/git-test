@@ -8,7 +8,7 @@ const Footer = ({ isDarkMode }) => {
           <div>
             <h3 className="text-xl font-semibold mb-4">Contact Information</h3>
             <div className="space-y-2 text-gray-300">
-              <p>Email: support@subhub.com</p>
+              <p>Email: chawsuhan1258@gmail.com</p>
               <p>Phone: +1 (555) 123-4567</p>
               <p>Address: 123 Creator Street, Digital City, DC 12345</p>
             </div>
@@ -19,7 +19,7 @@ const Footer = ({ isDarkMode }) => {
             <ul className="space-y-2">
               <li><a href="/" className="text-gray-300 hover:text-white transition-colors duration-300">Home</a></li>
               <li><a href="/creators" className="text-gray-300 hover:text-white transition-colors duration-300">Creators</a></li>
-              <li><a href="/subscriptions" className="text-gray-300 hover:text-white transition-colors duration-300">Subscriptions</a></li>
+              {/* <li><a href="/subscriptions" className="text-gray-300 hover:text-white transition-colors duration-300">Subscriptions</a></li> */}
               <li><a href="/contact" className="text-gray-300 hover:text-white transition-colors duration-300">Contact</a></li>
             </ul>
           </div>
@@ -39,7 +39,7 @@ const Footer = ({ isDarkMode }) => {
       <div className="border-t border-gray-700">
         <div className="max-w-6xl mx-auto px-8 py-6">
           <p className="text-center text-gray-300">
-            &copy; 2024 SubHub - Premium Subscription Platform. All rights reserved.
+            &copy; 2024 Nexora - Premium Subscription Platform. All rights reserved.
           </p>
         </div>
       </div>

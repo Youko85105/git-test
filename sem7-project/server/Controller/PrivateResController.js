@@ -10,7 +10,7 @@ import commentRoutes from '../routes/comments.routes.js';
 import likeRoutes from '../routes/likes.routes.js';
 import { getPostWithComments } from "../Private/Posting.js";
 import { revenueLast6Months, weeklyEngagement } from "../Private/Analytics.js";
-import { getAdminDashboard } from "../Private/AdminAnalysis.js";
+import { getAdminDashboard, getAllUsers } from "../Private/AdminAnalysis.js";
 
 const router = Router();
 
@@ -35,5 +35,6 @@ router.use('/like', authMiddleware, likeRoutes);
 router.get("/analytics/revenue-6m", authMiddleware, revenueLast6Months);
 router.get("/analytics/weekly-engagement", authMiddleware, weeklyEngagement);
 router.get("/admin/dashboard", authMiddleware, getAdminDashboard);
+router.get("/admin/users", authMiddleware, getAllUsers);
 
 export default router;

@@ -5,7 +5,7 @@ import { useAuth } from '../AuthContext'; // ← adjust path if your AuthContext
 import { getUnreadCount } from "../services/notifications"; // <- add
 
 const Navbar = ({ isDarkMode, toggleTheme }) => {
-  const { isLoggedIn, logout } = useAuth(); // ← get auth state from context
+  const { isLoggedIn, logout, user, loading } = useAuth();
   const [unread, setUnread] = useState(0);
 
   const refreshUnread = async () => {
@@ -81,21 +81,25 @@ const Navbar = ({ isDarkMode, toggleTheme }) => {
               >
                 About
               </Link>
-              <Link
+              {/* <Link
                 to="/contact"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`}
               >
                 Contact
-              </Link>
+              </Link> */}
 
-              {isLoggedIn && (
+              {!loading && isLoggedIn && user?.role !== "admin" && (
                 <Link
                   to="/edit-profile"
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-blue-400 hover:text-white hover:bg-gray-700' : 'text-blue-700 hover:text-gray-900 hover:bg-gray-100'}`}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode
+                      ? "text-blue-400 hover:text-white hover:bg-gray-700"
+                      : "text-blue-700 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
                 >
                   Edit Profile
                 </Link>
               )}
+
             </div>
           </div>
 

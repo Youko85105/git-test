@@ -23,7 +23,7 @@ const AdminLogin = ({ onLogin, isDarkMode }) => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    email: credentials.username.includes('@') ? credentials.username : 'admin@subhub.com',
+                    email: credentials.username.includes('@') ? credentials.username : 'chawsuhan1258@gmail.com',
                     password: credentials.password
                 })
             });
@@ -81,7 +81,7 @@ const AdminLogin = ({ onLogin, isDarkMode }) => {
                         Admin Login Options:
                     </h3>
                     <div className={`text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-800'}`}>
-                        <p>Email: <code className="font-mono">admin@subhub.com</code></p>
+                        <p>Email: <code className="font-mono">chawsuhan1258@gmail.com</code></p>
                         <p>Username: <code className="font-mono">admin</code> (auto-converts to email)</p>
                         <p>Password: <code className="font-mono">admin123</code></p>
                     </div>

@@ -48,6 +48,26 @@ export const getSubscriptions = async () => {
     });
 };
 
+export const getAdminDashboard = async() => {
+    const token = localStorage.getItem('token');
+    console.log(token);
+    
+    return makeRequest(`/private/admin/dashboard`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+};
+
+export const getStripeDashboardLink = async () => {
+  const token = localStorage.getItem('token');
+  return makeRequest('/private/stripe/dashboard', {   // 👈 fixed path
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
 // Get all creators (for admin)
 export const getAllCreators = async () => {
     return makeRequest('/public/creator/all', {
@@ -55,15 +75,26 @@ export const getAllCreators = async () => {
     });
 };
 
-// Get all users (admin only)
+// Get all users + creators (admin only)
 export const getAllUsers = async () => {
-    const token = localStorage.getItem('token');
-    return axios.get(`${API_BASE_URL}/admin/users`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-        },
-    });
+  const token = localStorage.getItem('token');
+  return makeRequest('/private/admin/users', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
 };
+
+// Get all users (admin only)
+// export const getAllUsers = async () => {
+//     const token = localStorage.getItem('token');
+//     return axios.get(`${API_BASE_URL}/admin/users`, {
+//         headers: {
+//             'Authorization': `Bearer ${token}`,
+//         },
+//     });
+// };
 
 // Admin login
 export const adminLogin = async (credentials) => {

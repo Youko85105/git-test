@@ -1,7 +1,7 @@
 // at top of CreatorDashboard.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getCreatorStats, getCreatorPosts } from '../../services/dashboard';
+import { getCreatorStats, getCreatorPosts, getStripeDashboardLink } from '../../services/dashboard';
 import StatCard from './components/StatCard';
 import ActivityCard from './components/ActivityCard';
 import RevenueChart from './components/RevenueChart';
@@ -23,6 +23,22 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
     const [revenueData, setRevenueData] = useState([]);
     const [engagementData, setEngagementData] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [stripeLoading, setStripeLoading] = useState(false);
+
+    const openStripeDashboard = async () => {
+        try {
+            setStripeLoading(true);
+            const res = await getStripeDashboardLink();
+            const url = res?.url || res?.data?.url; // robust to makeRequest/axios shapes
+            if (!url) throw new Error('Stripe dashboard URL missing');
+            window.location.href = url; // redirect to Stripe
+        } catch (err) {
+            console.error(err);
+            alert(err.message || 'Could not open Stripe dashboard.');
+        } finally {
+            setStripeLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchCreatorData = async () => {
@@ -179,38 +195,91 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                     title="Total Subscribers"
                     value={stats.totalSubscribers}
                     icon="👥"
-                    trend={stats.growth + " this month"}
+                    //trend={stats.growth + " this month"}
                     isDarkMode={isDarkMode}
                     highlight={true}
                 />
-                <StatCard
+                {/* <StatCard
                     title="Monthly Revenue"
                     value={`$${stats.monthlyRevenue}`}
                     icon="💰"
                     trend="+15% vs last month"
                     isDarkMode={isDarkMode}
-                />
+                /> */}
                 <StatCard
                     title="Total Posts"
                     value={stats.totalPosts}
                     icon="📝"
-                    trend="+3 this week"
+                    //trend="+3 this week"
                     isDarkMode={isDarkMode}
                 />
-                <StatCard
-                    title="Engagement Rate"
-                    value={`${stats.engagement}%`}
-                    icon="📊"
-                    trend="Above average"
-                    isDarkMode={isDarkMode}
-                />
+                <button
+                    onClick={openStripeDashboard}
+                    className="block w-full text-left rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                    <StatCard
+                        title="Payouts (Stripe)"
+                        value={stripeLoading ? "…" : "💳"}
+                        icon="⭐"
+                        trend="Open Stripe Dashboard →"
+                        isDarkMode={isDarkMode}
+                        highlight
+                    />
+                </button>
+
             </div>
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <RevenueChart data={revenueData} isDarkMode={isDarkMode} />
+                {/* Engagement Chart */}
                 <EngagementChart data={engagementData} isDarkMode={isDarkMode} />
+
+                {/* Right side stacked Quick Stats + Quick Actions */}
+                <div className="space-y-6">
+                    <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
+                        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            Quick Stats
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between">
+                                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Posts</span>
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalPosts}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Likes</span>
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalLikes}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Comments</span>
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalComments}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
+                        <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            Quick Actions
+                        </h3>
+                        <div className="space-y-3">
+                            <Link to="/create-post" className={`block w-full text-left p-3 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'}`}>
+                                📝 <span className="ml-3">Create New Post</span>
+                            </Link>
+                            <Link to="/edit-profile" className={`block w-full text-left p-3 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'}`}>
+                                ⚙️ <span className="ml-3">Edit Profile</span>
+                            </Link>
+                            <Link
+                                to="/creators"
+                                className={`block w-full text-left p-3 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'}`}
+                            >
+                                <span className="flex items-center">
+                                    🔍 <span className="ml-3">Discover Creators</span>
+                                </span>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
+
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -263,16 +332,16 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                 {/* Sidebar */}
                 <div className="space-y-6">
                     {/* Quick Stats */}
-                    <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
+                    {/* <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
                         <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                             Quick Stats
                         </h3>
-                        <div className="space-y-4">
-                            {/* <div className="flex justify-between">
+                        <div className="space-y-4"> */}
+                    {/* <div className="flex justify-between">
                                 <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Profile Views</span>
                                 <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>1,234</span>
                             </div> */}
-                            <div className="flex justify-between">
+                    {/* <div className="flex justify-between">
                                 <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Posts</span>
                                 <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalPosts}</span>
                             </div>
@@ -285,7 +354,7 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                                 <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalComments}</span>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Recent Activity */}
                     {/* <ActivityCard
@@ -300,7 +369,7 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                     /> */}
 
                     {/* Quick Actions */}
-                    <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
+                    {/* <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
                         <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                             Quick Actions
                         </h3>
@@ -320,20 +389,20 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                                 <span className="flex items-center">
                                     ⚙️ <span className="ml-3">Edit Profile</span>
                                 </span>
-                            </Link>
-                            <Link
+                            </Link> */}
+                    {/* <Link
                                 to="/analytics"
                                 className={`block w-full text-left p-3 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-700'}`}
                             >
                                 <span className="flex items-center">
                                     📊 <span className="ml-3">View Analytics</span>
                                 </span>
-                            </Link>
-                        </div>
-                    </div>
+                            </Link> */}
+                    {/* </div>
+                    </div> */}
 
                     {/* Pro Tip */}
-                    <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gradient-to-br from-green-900 to-blue-900 border-green-700' : 'bg-gradient-to-br from-green-50 to-blue-50 border-green-200'} p-6`}>
+                    {/* <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gradient-to-br from-green-900 to-blue-900 border-green-700' : 'bg-gradient-to-br from-green-50 to-blue-50 border-green-200'} p-6`}>
                         <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                             💡 Pro Tip
                         </h3>
@@ -343,7 +412,7 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                         <button className={`inline-flex items-center text-sm font-medium ${isDarkMode ? 'text-green-400 hover:text-green-300' : 'text-green-600 hover:text-green-500'} transition-colors`}>
                             Learn More Tips →
                         </button>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

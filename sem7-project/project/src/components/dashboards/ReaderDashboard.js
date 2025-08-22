@@ -81,14 +81,14 @@ const ReaderDashboard = ({ isDarkMode, user, dashboardData }) => {
                     title="Active Subscriptions"
                     value={stats.totalSubscriptions}
                     icon="📚"
-                    trend="+2 this month"
+                    //trend="+2 this month"
                     isDarkMode={isDarkMode}
                 />
                 <StatCard
                     title="Total Spent"
                     value={`$${stats.totalSpent}`}
                     icon="💰"
-                    trend="This month: $45"
+                    //trend="This month: $45"
                     isDarkMode={isDarkMode}
                 />
                 <StatCard

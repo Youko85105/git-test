@@ -11,7 +11,7 @@ export async function createAdminUser() {
 
     // 1) Check if an admin already exists (by role/email)
     const existing = await Base.findOne({
-      $or: [{ role: 'admin' }, { email: 'admin@subhub.com' }]
+      $or: [{ role: 'admin' }, { email: 'chawsuhan1258@gmail.com' }]
     }).lean();
 
     if (existing) {
@@ -28,7 +28,7 @@ export async function createAdminUser() {
     if (AdminModel) {
       // ✅ Best path: Admin has username (since Admin schema can define it)
       await new AdminModel({
-        email: 'admin@subhub.com',
+        email: 'chawsuhan1258@gmail.com',
         password: hashed,
         username: 'admin',  // requires Admin schema to define this
         // role will be set to 'admin' automatically by the discriminator
@@ -37,14 +37,14 @@ export async function createAdminUser() {
     } else {
       // ⚠️ Fallback: Base doesn’t have `username`, so it will be admin with only email/password
       await new Base({
-        email: 'admin@subhub.com',
+        email: 'chawsuhan1258@gmail.com',
         password: hashed,
         role: 'admin', // discriminatorKey field is allowed on Base
       }).save();
       console.log('🎉 Admin created via Base (no username field on Base)');
     }
 
-    console.log('📧 email: admin@subhub.com\n🔐 password: admin123\n🧩 role: admin');
+    console.log('📧 email: chawsuhan1258@gmail.com\n🔐 password: admin123\n🧩 role: admin');
   } catch (err) {
     console.error('❌ Failed to create admin:', err);
   }

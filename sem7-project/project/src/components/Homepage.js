@@ -199,7 +199,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
       </div>
 
       {/* FAQ Section */}
-      <div className={`py-16 px-8 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+      {/* <div className={`py-16 px-8 transition-colors duration-300 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h2 className={`text-4xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Frequently Asked Questions</h2>
@@ -237,7 +237,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Community Discussion */}
       {/* <div className="max-w-4xl mx-auto px-4 py-8">

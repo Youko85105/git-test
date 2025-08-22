@@ -11,7 +11,7 @@ const AboutPage = ({ isDarkMode, toggleTheme }) => {
         {/* Header Section */}
         <div className="text-center py-16 px-8">
           <h1 className={`text-5xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            About SubHub
+            About Nexora
           </h1>
           <p className={`text-xl max-w-3xl mx-auto ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             Empowering creators and connecting communities through premium content
@@ -26,7 +26,7 @@ const AboutPage = ({ isDarkMode, toggleTheme }) => {
               Our Mission
             </h2>
             <p className={`text-lg leading-relaxed max-w-4xl mx-auto ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              SubHub is dedicated to revolutionizing the way creators monetize their content and how audiences access premium experiences. 
+              Nexora is dedicated to revolutionizing the way creators monetize their content and how audiences access premium experiences. 
               We believe that every creator deserves the opportunity to build a sustainable income doing what they love, 
               while providing subscribers with exclusive, high-quality content that enriches their lives.
             </p>
@@ -83,12 +83,12 @@ const AboutPage = ({ isDarkMode, toggleTheme }) => {
             </h2>
             <div className="space-y-6 max-w-4xl mx-auto">
               <p className={`text-lg leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                Founded in 2024, SubHub emerged from a simple observation: creators were struggling to monetize their passion, 
+                Founded in 2024, Nexora emerged from a simple observation: creators were struggling to monetize their passion, 
                 while audiences were looking for more meaningful connections with the people they follow. 
                 We built a platform that bridges this gap, creating a win-win ecosystem where everyone thrives.
               </p>
               <p className={`text-lg leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                Today, SubHub hosts thousands of creators across diverse categories - from tech tutorials to fitness coaching, 
+                Today, Nexora hosts thousands of creators across diverse categories - from tech tutorials to fitness coaching, 
                 from business insights to entertainment. Our platform continues to evolve based on creator and subscriber feedback, 
                 ensuring we remain at the forefront of the creator economy.
               </p>
@@ -146,7 +146,7 @@ const AboutPage = ({ isDarkMode, toggleTheme }) => {
             </h2>
             <p className={`text-lg leading-relaxed mb-8 max-w-3xl mx-auto ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               Whether you're a creator looking to monetize your passion or a subscriber seeking exclusive content, 
-              SubHub is the platform for you. Join thousands of others who have already discovered the power of 
+              Nexora is the platform for you. Join thousands of others who have already discovered the power of 
               meaningful creator-subscriber relationships.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
