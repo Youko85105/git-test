@@ -2,7 +2,9 @@ import React from 'react';
 
 const RevenueChart = ({ data, isDarkMode }) => {
     // Find the maximum revenue to scale the chart
-    const maxRevenue = Math.max(...data.map(item => item.revenue));
+    const safe = Array.isArray(data) ? data : [];
+    const vals = safe.map(it => Number(it.revenue) || 0);
+    const maxRevenue = Math.max(1, ...(vals.length ? vals : [1])); // avoid -Infinity/0
 
     return (
         <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
@@ -47,20 +49,20 @@ const RevenueChart = ({ data, isDarkMode }) => {
 
                         {/* Revenue bars */}
                         <div className="absolute inset-0 flex items-end justify-between px-2">
-                            {data.map((item, index) => {
-                                const height = (item.revenue / maxRevenue) * 100;
+                            {safe.map((item) => {
+                                const pct = ((Number(item.revenue) || 0) / maxRevenue) * 100;
                                 return (
-                                    <div key={item.month} className="flex flex-col items-center">
+                                    <div key={item.month} className="flex flex-col items-center h-full">
                                         {/* Bar */}
                                         <div
                                             className={`w-8 rounded-t-lg transition-all duration-500 ${isDarkMode ? 'bg-blue-500' : 'bg-blue-600'
                                                 } hover:opacity-80 cursor-pointer relative group`}
-                                            style={{ height: `${height}%` }}
+                                            style={{ height: `${pct}%` }}
                                         >
                                             {/* Tooltip */}
                                             <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 rounded text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity ${isDarkMode ? 'bg-gray-900 text-white border border-gray-600' : 'bg-gray-800 text-white'
                                                 }`}>
-                                                ${item.revenue}
+                                                ${Number(item.revenue) || 0}
                                             </div>
                                         </div>
 
@@ -85,7 +87,7 @@ const RevenueChart = ({ data, isDarkMode }) => {
                     </div>
                 </div>
                 <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Current: ${data[data.length - 1]?.revenue || 0}
+                    Current: ${safe.at(-1)?.revenue || 0}
                 </div>
             </div>
         </div>

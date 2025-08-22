@@ -11,8 +11,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     try {
-      const token = localStorage.getItem("token");
-      const raw = localStorage.getItem("user"); // might be "undefined" from old code
+       const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
+       const raw   = localStorage.getItem("user")  || localStorage.getItem("adminUser");
 
       if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;

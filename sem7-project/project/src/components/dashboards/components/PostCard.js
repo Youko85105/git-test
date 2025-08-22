@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { deletePost } from '../../../services/posts';
 
 const PostCard = ({ post, isDarkMode }) => {
     const postTitle = post.title || 'Untitled Post';
@@ -7,14 +8,36 @@ const PostCard = ({ post, isDarkMode }) => {
     const postId = post._id || post.id;
     const createdAt = post.createdAt ? new Date(post.createdAt).toLocaleDateString() : 'Recently';
     const attachments = post.attachments || [];
+    const navigate = useNavigate();
+    
+    // Real engagement data
+    const likeCount = typeof post?.likeCount === "number" ? post.likeCount : 0;
+    const commentCount = typeof post?.commentCount === "number" ? post.commentCount : 0;
 
-    // Mock engagement data (in real app, this would come from API)
-    const mockStats = {
-        views: Math.floor(Math.random() * 500) + 50,
-        likes: Math.floor(Math.random() * 100) + 10,
-        comments: Math.floor(Math.random() * 30) + 2
-    };
+    const handleDeleteClick = async () => {
+    if (!postId) return;
+    const ok = window.confirm("Delete this post? This cannot be undone.");
+    if (!ok) return;
 
+    try {
+      await deletePost(postId);
+      // simplest UX: reload or redirect so the list refreshes
+      // Option A: full reload
+      window.location.reload();
+
+      // Option B: if you're on a detail page:
+      // navigate("/dashboard");
+    } catch (err) {
+      if (err?.status === 401) {
+        const redirect = encodeURIComponent(
+          window.location.pathname + window.location.search
+        );
+        window.location.href = `/login?redirect=${redirect}`;
+        return;
+      }
+      alert(err?.message || "Failed to delete");
+    }
+  };
     return (
         <div className={`p-4 rounded-lg border transition-all duration-300 hover:shadow-md ${isDarkMode ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : 'bg-gray-50 border-gray-200 hover:border-gray-300'
             }`}>
@@ -29,13 +52,13 @@ const PostCard = ({ post, isDarkMode }) => {
                 </div>
 
                 <div className="flex items-center space-x-2 ml-4">
-                    <button className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-600 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
+                    <button onClick={() => navigate(`/edit-post/${postId}`)} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-gray-600 text-gray-400' : 'hover:bg-gray-200 text-gray-500'
                         }`}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                     </button>
-                    <button className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900 text-red-400' : 'hover:bg-red-50 text-red-500'
+                    <button onClick={handleDeleteClick} className={`p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-red-900 text-red-400' : 'hover:bg-red-50 text-red-500'
                         }`}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -61,22 +84,22 @@ const PostCard = ({ post, isDarkMode }) => {
             {/* Post Stats */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                    <div className="flex items-center">
+                    {/* <div className="flex items-center">
                         <span className="text-sm mr-1">👁️</span>
                         <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                             {mockStats.views}
                         </span>
-                    </div>
+                    </div> */}
                     <div className="flex items-center">
                         <span className="text-sm mr-1">❤️</span>
                         <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {mockStats.likes}
+                            {likeCount}
                         </span>
                     </div>
                     <div className="flex items-center">
                         <span className="text-sm mr-1">💬</span>
                         <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {mockStats.comments}
+                            {commentCount}
                         </span>
                     </div>
                 </div>

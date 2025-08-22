@@ -4,7 +4,7 @@ import Footer from './Footer';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5001/api'; // fallback for local
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3002/api'; // fallback for local
 const DEFAULT_IMAGE = '/images/creator-laptop.jpg';
 
 const EditProfile = ({ isDarkMode, toggleTheme }) => {

@@ -1,5 +1,5 @@
 // Simple API service for making HTTP requests
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
 export async function makeRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;

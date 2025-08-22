@@ -5,7 +5,7 @@ import Footer from './Footer';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../AuthContext';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
 const LoginPage = ({ isDarkMode, toggleTheme }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +16,8 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
+  const searchParams = new URLSearchParams(location.search);
+  const upgraded = searchParams.get("upgraded");
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -91,6 +93,12 @@ const LoginPage = ({ isDarkMode, toggleTheme }) => {
               {isLogin ? 'Sign in to your account' : 'Create your account to get started'}
             </p>
           </div>
+
+          {upgraded === "1" && (
+            <div className="mb-4 text-sm text-green-600 bg-green-100 border border-green-300 rounded-lg p-3">
+              🎉 Onboarding complete! Please log in as a Creator.
+            </div>
+          )}
 
           {error && <div className="mb-4 text-sm text-red-500">{error}</div>}
 

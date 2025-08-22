@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// at top of CreatorDashboard.jsx
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getCreatorStats, getCreatorPosts } from '../../services/dashboard';
 import StatCard from './components/StatCard';
@@ -6,6 +7,8 @@ import ActivityCard from './components/ActivityCard';
 import RevenueChart from './components/RevenueChart';
 import EngagementChart from './components/EngagementChart';
 import PostCard from './components/PostCard';
+import { makeRequest } from "../../services/makeRequest";
+import { getWeeklyEngagement, getRevenueLast6Months } from "../../services/analytics";
 
 const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
     const [stats, setStats] = useState({
@@ -26,50 +29,85 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
             try {
                 setLoading(true);
 
-                const [subscribersData, postsData] = await Promise.all([
-                    getCreatorStats().catch(err => ({ data: [] })),
-                    getCreatorPosts().catch(err => ({ data: [] }))
+                const [subscribersData, postsData, weeklyRes, revenueRes] = await Promise.all([
+                    getCreatorStats().catch(() => ({ data: [] })),
+                    getCreatorPosts().catch(() => ({ data: [] })),
+                    getWeeklyEngagement().catch(() => ({ data: [] })),
+                    getRevenueLast6Months().catch(() => ({ data: [] })), // ← use if you want real revenue
                 ]);
 
                 const subs = Array.isArray(subscribersData) ? subscribersData : (subscribersData?.data || []);
                 const postsArray = Array.isArray(postsData) ? postsData : (postsData?.data || []);
+                const weeklyArr = Array.isArray(weeklyRes?.data ?? weeklyRes) ? (weeklyRes?.data ?? weeklyRes) : [];
+                const revenueArr = Array.isArray(revenueRes?.data ?? revenueRes) ? (revenueRes?.data ?? revenueRes) : [];
+
+                // ---- REAL monthly revenue (this month, in dollars) from invoices
+                const currentMonthRevenue =
+                    revenueArr.length ? Number(revenueArr.at(-1)?.revenue) || 0 : 0;
+
+                // ---- REAL engagement rate for this week
+                // interactions = likes + comments (+ shares if you add them)
+                const totalInteractions = weeklyArr.reduce(
+                    (sum, d) => sum +
+                        (Number(d?.likes) || 0) +
+                        (Number(d?.comments) || 0) +
+                        (Number(d?.shares) || 0),
+                    0
+                );
+                // ER = interactions / subscribers * 100 (cap to a sane max)
+                const engagementRate = subs.length
+                    ? Math.min(200, Math.round((totalInteractions / subs.length) * 100))
+                    : 0;
 
                 setSubscribers(subs);
                 setPosts(postsArray);
 
-                // Calculate stats
-                const monthlyRevenue = subs.length * (dashboardData?.fee || 15); // Assuming average fee
+                // stats
+                const fee = Number(dashboardData?.fee) || 15;
+                const monthlyRevenue = subs.length * fee;
                 setStats({
                     totalSubscribers: subs.length,
-                    monthlyRevenue: monthlyRevenue,
+                    monthlyRevenue: currentMonthRevenue,
                     totalPosts: postsArray.length,
-                    engagement: Math.floor(Math.random() * 95) + 60, // Mock engagement rate
-                    growth: subs.length > 10 ? '+12%' : '+5%'
+                    engagement: engagementRate,
+                    growth: subs.length > 10 ? "+12%" : "+5%",
                 });
 
-                // Mock revenue data for chart
-                setRevenueData([
-                    { month: 'Jan', revenue: monthlyRevenue * 0.6 },
-                    { month: 'Feb', revenue: monthlyRevenue * 0.7 },
-                    { month: 'Mar', revenue: monthlyRevenue * 0.8 },
-                    { month: 'Apr', revenue: monthlyRevenue * 0.9 },
-                    { month: 'May', revenue: monthlyRevenue * 0.95 },
-                    { month: 'Jun', revenue: monthlyRevenue }
-                ]);
+                // ✅ Weekly engagement -> chart shape
+                setEngagementData(
+                    weeklyArr.map(d => ({
+                        day: d?.day ?? "",
+                        likes: Number(d?.likes) || 0,
+                        comments: Number(d?.comments) || 0,
+                        shares: Number(d?.shares) || 0,
+                    }))
+                );
 
-                // Mock engagement data
-                setEngagementData([
-                    { day: 'Mon', likes: 45, comments: 12, shares: 8 },
-                    { day: 'Tue', likes: 52, comments: 18, shares: 6 },
-                    { day: 'Wed', likes: 38, comments: 9, shares: 12 },
-                    { day: 'Thu', likes: 61, comments: 22, shares: 15 },
-                    { day: 'Fri', likes: 55, comments: 16, shares: 10 },
-                    { day: 'Sat', likes: 48, comments: 14, shares: 7 },
-                    { day: 'Sun', likes: 42, comments: 11, shares: 9 }
-                ]);
-
-            } catch (error) {
-                console.error('Failed to fetch creator data:', error);
+                // EITHER: ✅ real revenue series (from your API)
+                if (revenueArr.length) {
+                    setRevenueData(
+                        revenueArr.map(m => ({
+                            month: m?.month ?? "",
+                            revenue: Number(m?.revenue) || 0,
+                        }))
+                    );
+                } else {
+                    // OR: keep your mock series (but ensure numbers are integers)
+                    setRevenueData([
+                        { month: "Jan", revenue: Math.round(monthlyRevenue * 0.6) },
+                        { month: "Feb", revenue: Math.round(monthlyRevenue * 0.7) },
+                        { month: "Mar", revenue: Math.round(monthlyRevenue * 0.8) },
+                        { month: "Apr", revenue: Math.round(monthlyRevenue * 0.9) },
+                        { month: "May", revenue: Math.round(monthlyRevenue * 0.95) },
+                        { month: "Jun", revenue: Math.round(monthlyRevenue) },
+                    ]);
+                }
+            } catch (err) {
+                console.error("Failed to fetch creator data:", err);
+                setSubscribers([]);
+                setPosts([]);
+                setEngagementData([]);
+                setRevenueData([]);
             } finally {
                 setLoading(false);
             }
@@ -77,6 +115,36 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
 
         fetchCreatorData();
     }, [dashboardData]);
+
+    // helper inside the component (above return)
+    const totals = useMemo(() => {
+        // Robust to different shapes: either numeric fields or arrays
+        const totalPosts = Array.isArray(posts) ? posts.length : 0;
+
+        let totalLikes = 0;
+        let totalComments = 0;
+        if (Array.isArray(posts)) {
+            for (const p of posts) {
+                const lc =
+                    typeof p?.likeCount === 'number'
+                        ? p.likeCount
+                        : Array.isArray(p?.likes)
+                            ? p.likes.length
+                            : 0;
+
+                const cc =
+                    typeof p?.commentCount === 'number'
+                        ? p.commentCount
+                        : Array.isArray(p?.comments)
+                            ? p.comments.length
+                            : 0;
+
+                totalLikes += lc;
+                totalComments += cc;
+            }
+        }
+        return { totalPosts, totalLikes, totalComments };
+    }, [posts]);
 
     if (loading) {
         return (
@@ -200,27 +268,27 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                             Quick Stats
                         </h3>
                         <div className="space-y-4">
-                            <div className="flex justify-between">
+                            {/* <div className="flex justify-between">
                                 <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Profile Views</span>
                                 <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>1,234</span>
-                            </div>
+                            </div> */}
                             <div className="flex justify-between">
-                                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Post Views</span>
-                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>5,678</span>
+                                <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Posts</span>
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalPosts}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Likes</span>
-                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>892</span>
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalLikes}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Comments</span>
-                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>156</span>
+                                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totals.totalComments}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Recent Activity */}
-                    <ActivityCard
+                    {/* <ActivityCard
                         title="Recent Activity"
                         activities={[
                             { action: "New subscriber joined", time: "1 hour ago", icon: "🎉" },
@@ -229,7 +297,7 @@ const CreatorDashboard = ({ isDarkMode, user, dashboardData }) => {
                             { action: "Revenue milestone reached", time: "1 day ago", icon: "🏆" }
                         ]}
                         isDarkMode={isDarkMode}
-                    />
+                    /> */}
 
                     {/* Quick Actions */}
                     <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>

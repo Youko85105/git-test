@@ -1,11 +1,14 @@
-import React from 'react';
+const EngagementChart = ({ data = [], isDarkMode }) => {
+  const safe = Array.isArray(data) ? data : [];
+  const likesArr = safe.map(it => Number(it.likes) || 0);
+  const commentsArr = safe.map(it => Number(it.comments) || 0);
+  const sharesArr = safe.map(it => Number(it.shares) || 0);
 
-const EngagementChart = ({ data, isDarkMode }) => {
-    // Find the maximum values to scale the chart
-    const maxLikes = Math.max(...data.map(item => item.likes));
-    const maxComments = Math.max(...data.map(item => item.comments));
-    const maxShares = Math.max(...data.map(item => item.shares));
-    const maxValue = Math.max(maxLikes, maxComments, maxShares);
+  // avoid divide-by-zero and NaN ticks
+  const maxLikes = likesArr.length ? Math.max(...likesArr) : 0;
+  const maxComments = commentsArr.length ? Math.max(...commentsArr) : 0;
+  const maxShares = sharesArr.length ? Math.max(...sharesArr) : 0;
+  const maxValue = Math.max(1, maxLikes, maxComments, maxShares); // at least 1
 
     return (
         <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>
@@ -86,7 +89,7 @@ const EngagementChart = ({ data, isDarkMode }) => {
                                             </div>
 
                                             {/* Shares bar */}
-                                            <div
+                                            {/* <div
                                                 className={`w-3 rounded-t-sm transition-all duration-500 ${isDarkMode ? 'bg-green-500' : 'bg-green-500'
                                                     } hover:opacity-80 cursor-pointer relative group`}
                                                 style={{ height: `${sharesHeight * 0.8}px` }}
@@ -96,7 +99,7 @@ const EngagementChart = ({ data, isDarkMode }) => {
                                                     }`}>
                                                     {item.shares} 🔄
                                                 </div>
-                                            </div>
+                                            </div> */}
                                         </div>
 
                                         {/* Day label */}
@@ -121,10 +124,10 @@ const EngagementChart = ({ data, isDarkMode }) => {
                     <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
                     <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Comments</span>
                 </div>
-                <div className="flex items-center">
+                {/* <div className="flex items-center">
                     <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
                     <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Shares</span>
-                </div>
+                </div> */}
             </div>
         </div>
     );

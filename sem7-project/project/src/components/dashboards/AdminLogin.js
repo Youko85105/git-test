@@ -15,7 +15,7 @@ const AdminLogin = ({ onLogin, isDarkMode }) => {
 
         try {
             // Use the real backend auth API
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',

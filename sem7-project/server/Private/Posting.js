@@ -60,79 +60,98 @@ export const createPost = async (req, res) => {
 };
 
 export const getAllPosts = async (req, res) => {
-    checkAuthorization(req, res);
-    const user = req.user.id;
-    let creator;
+  checkAuthorization(req, res);
+  const user = req.user.id;
+  let creator;
 
-    if (req.params.creatorId) {
-        creator = req.params.creatorId;
+  if (req.params.creatorId) {
+    creator = req.params.creatorId;
+  }
+
+  // case 1: creator seeing own posts
+  if (!creator) {
+    try {
+      const posts = await Post.find({ author: user });
+      const postIds = posts.map(p => p._id);
+
+      // counts for likes
+      const likeCounts = await PostLike.aggregate([
+        { $match: { postId: { $in: postIds } } },
+        { $group: { _id: "$postId", n: { $sum: 1 } } }
+      ]);
+      const likeMap = new Map(likeCounts.map(c => [String(c._id), c.n]));
+
+      // counts for comments
+      const commentCounts = await Comment.aggregate([
+        { $match: { postId: { $in: postIds } } },
+        { $group: { _id: "$postId", n: { $sum: 1 } } }
+      ]);
+      const commentMap = new Map(commentCounts.map(c => [String(c._id), c.n]));
+
+      // which posts current user liked
+      const liked = await PostLike.find(
+        { postId: { $in: postIds }, subscriberId: user },
+        { postId: 1, _id: 0 }
+      ).lean();
+      const likedSet = new Set(liked.map(d => String(d.postId)));
+
+      const withCounts = posts.map(p => ({
+        ...p.toObject(),
+        likeCount: likeMap.get(String(p._id)) || 0,
+        commentCount: commentMap.get(String(p._id)) || 0,
+        likedByMe: likedSet.has(String(p._id))
+      }));
+
+      return res.status(200).json(withCounts);
+
+    } catch (error) {
+      return res.status(404).json({ message: error });
     }
-    if (!creator) {    //show a creator his own posts on dashboard
-        try {
-            const posts = await Post.find({ author: user });
-            const postIds = posts.map(p => p._id);
+  }
 
-            // counts for each post
-            const counts = await PostLike.aggregate([
-                { $match: { postId: { $in: postIds } } },
-                { $group: { _id: "$postId", n: { $sum: 1 } } }
-            ]);
+  // case 2: subscriber viewing a creator's posts
+  else if (creator && await isSubscribed(user, creator)) {
+    try {
+      const posts = await Post.find({ author: creator });
+      const postIds = posts.map(p => p._id);
 
-            const countMap = new Map(counts.map(c => [String(c._id), c.n]));
+      // likes
+      const likeCounts = await PostLike.aggregate([
+        { $match: { postId: { $in: postIds } } },
+        { $group: { _id: "$postId", n: { $sum: 1 } } }
+      ]);
+      const likeMap = new Map(likeCounts.map(c => [String(c._id), c.n]));
 
-            // which of these posts the current user liked
-            const liked = await PostLike.find(
-                { postId: { $in: postIds }, subscriberId: user },
-                { postId: 1, _id: 0 }
-            ).lean();
-            const likedSet = new Set(liked.map(d => String(d.postId)));
+      // comments
+      const commentCounts = await Comment.aggregate([
+        { $match: { postId: { $in: postIds } } },
+        { $group: { _id: "$postId", n: { $sum: 1 } } }
+      ]);
+      const commentMap = new Map(commentCounts.map(c => [String(c._id), c.n]));
 
-            const withLikes = posts.map(p => ({
-                ...p.toObject(),
-                likeCount: countMap.get(String(p._id)) || 0,
-                likedByMe: likedSet.has(String(p._id))
-            }));
+      const liked = await PostLike.find(
+        { postId: { $in: postIds }, subscriberId: user },
+        { postId: 1, _id: 0 }
+      ).lean();
+      const likedSet = new Set(liked.map(d => String(d.postId)));
 
-            return res.status(200).json(withLikes); // ← return the decorated list
+      const withCounts = posts.map(p => ({
+        ...p.toObject(),
+        likeCount: likeMap.get(String(p._id)) || 0,
+        commentCount: commentMap.get(String(p._id)) || 0,
+        likedByMe: likedSet.has(String(p._id))
+      }));
 
-        } catch (error) {
-            return res.status(404).json({ message: error });
-        }
-    } else if (creator && await isSubscribed(user, creator)) {     //show a creator's post to his active subscriber on creator's profile
-        try {
-            console.log("subscribed");
-            const posts = await Post.find({ author: creator });
-            const postIds = posts.map(p => p._id);
+      return res.status(200).json(withCounts);
 
-            // counts for each post
-            const counts = await PostLike.aggregate([
-                { $match: { postId: { $in: postIds } } },
-                { $group: { _id: "$postId", n: { $sum: 1 } } }
-            ]);
-
-            const countMap = new Map(counts.map(c => [String(c._id), c.n]));
-
-            // which of these posts the current user liked
-            const liked = await PostLike.find(
-                { postId: { $in: postIds }, subscriberId: user },
-                { postId: 1, _id: 0 }
-            ).lean();
-            const likedSet = new Set(liked.map(d => String(d.postId)));
-
-            const withLikes = posts.map(p => ({
-                ...p.toObject(),
-                likeCount: countMap.get(String(p._id)) || 0,
-                likedByMe: likedSet.has(String(p._id))
-            }));
-
-            return res.status(200).json(withLikes); // ← return the decorated list
-
-        } catch (error) {
-            return res.status(404).json({ message: error });
-        }
-    } else {
-        return res.status(401).json({ message: "Unauthorized Access" });
+    } catch (error) {
+      return res.status(404).json({ message: error });
     }
+  }
+
+  else {
+    return res.status(401).json({ message: "Unauthorized Access" });
+  }
 };
 
 const isSubscribed = async (user, creator) => {
@@ -150,33 +169,68 @@ const isSubscribed = async (user, creator) => {
     }
 }
 
+// Private/Posting.js (editPost)
 export const editPost = async (req, res) => {
-    checkAuthorization(req, res);
-    const user = req.user.id;
-    const role = req.user.role;
-    const postId = req.params.postId;
-    const editData = { ...req.body };
-    if (Array.isArray(req.files)) {
-        const attachments = req.attachments;
-        console.log(attachments)
-        editData.attachments = attachments;
+  checkAuthorization(req, res);
+  const user = req.user.id;
+  const role = req.user.role;
+  const postId = req.params.postId;
+
+  const editData = { ...req.body };
+
+  // Parse incoming JSON fields if present
+  let keptExisting = [];
+  try {
+    if (editData.keptExisting) {
+      keptExisting = Array.isArray(editData.keptExisting)
+        ? editData.keptExisting
+        : JSON.parse(editData.keptExisting);
     }
-    try {
-        const post = await Post.findById(postId).select('author attachments');
-        if (role === "creator" && post.author?.toString() === user) { // safer compare
-            const editedPost = await Post.findByIdAndUpdate(postId, { $set: editData });
-            await editedPost.save();
-            post.attachments.map(pic => deleteImage(pic.publicId));
-            return res.status(200).json({ message: "Post edited successfully", post: editedPost });
-        } else {
-            return res.status(401).json({ message: "Unauthorized access" });
-        }
-    } catch (error) {
-        console.log("Update error");
-        editData.attachments.map(pic => deleteImage(pic.publicId));
-        return res.status(500).json({ message: error });
-    }
+  } catch { keptExisting = []; }
+
+  const replaceAll = String(editData.replaceAll).toLowerCase() === 'true';
+
+  const old = await Post.findById(postId).select('author attachments');
+  if (!old) return res.status(404).json({ message: 'Post not found' });
+  if (role !== 'creator' || old.author?.toString() !== user) {
+    return res.status(401).json({ message: 'Unauthorized access' });
+  }
+
+  const newUploads = Array.isArray(req.files) && req.files.length > 0 ? (req.attachments || []) : [];
+  let nextAttachments = old.attachments;
+
+  let toDelete = [];
+  if (replaceAll) {
+    // explicit full replace
+    nextAttachments = newUploads;
+    toDelete = (old.attachments || []).map(a => a.publicId).filter(Boolean);
+  } else if (keptExisting.length) {
+    // partial keep/delete path
+    const keepSet = new Set(keptExisting);
+    const keptObjects = (old.attachments || []).filter(a => keepSet.has(a.publicId));
+    nextAttachments = [...keptObjects, ...newUploads];
+    const oldIds = (old.attachments || []).map(a => a.publicId);
+    toDelete = oldIds.filter(pid => !keepSet.has(pid));
+  } else if (newUploads.length) {
+    // default append mode
+    nextAttachments = [...old.attachments, ...newUploads];
+    toDelete = []; // keep all old
+  }
+
+  const updated = await Post.findByIdAndUpdate(
+    postId,
+    { $set: { title: editData.title ?? old.title, body: editData.body ?? old.body, attachments: nextAttachments } },
+    { new: true }
+  );
+
+  for (const pid of toDelete) {
+    if (pid) await deleteImage(pid);
+  }
+
+  return res.status(200).json({ message: 'Post edited successfully', post: updated });
 };
+
+
 
 export const deletePost = async (req, res) => {
     checkAuthorization(req, res);
@@ -185,7 +239,7 @@ export const deletePost = async (req, res) => {
     const postId = req.params.postId;
     try {
         const post = await Post.findById(postId).select('author attachments');
-        if (role == "creator" && post.author == user) {
+        if (role === "creator" && post.author?.toString() === user) {
             await Post.findByIdAndDelete(postId);
             post.attachments.map(pic => { deleteImage(pic.publicId) });
             return res.status(200).json({ message: "Successfully deleted ", post });
@@ -200,44 +254,42 @@ export const deletePost = async (req, res) => {
 
 // controllers/post.js (or wherever togglePostLike lives)
 export const togglePostLike = async (req, res) => {
-    try {
-        checkAuthorization(req, res);
-        const userId = req.user.id;
-        const { postId } = req.params;
+  try {
+    checkAuthorization(req, res);
+    const userId = req.user.id;
+    const { postId } = req.params;
 
-        const post = await Post.findById(postId).select('author');
-        if (!post) return res.status(404).json({ message: 'Post not found' });
+    const post = await Post.findById(postId).select('author');
+    if (!post) return res.status(404).json({ message: 'Post not found' });
 
-        const allowed = await isSubscribed(userId, post.author);
-        if (!allowed) return res.status(401).json({ message: 'Unauthorized access' });
+    // ✅ allow if user is the creator or a subscriber
+    const allowed = userId.toString() === post.author.toString() 
+                 || await isSubscribed(userId, post.author);
+    if (!allowed) return res.status(401).json({ message: 'Unauthorized access' });
 
-        const existing = await PostLike.findOne({ postId, subscriberId: userId });
-        let liked;
+    const existing = await PostLike.findOne({ postId, subscriberId: userId });
+    let liked;
 
-        if (existing) {
-            await existing.deleteOne();
-            liked = false;
-        } else {
-            await PostLike.create({ postId, subscriberId: userId });
-            liked = true;
-        }
-
-        // 👇 authoritative count after the mutation
-        const likeCount = await PostLike.countDocuments({ postId });
-
-        // (optional) discourage caches on “read after write”
-        res.set('Cache-Control', 'no-store');
-
-        return res.status(200).json({ liked, likeCount });
-    } catch (err) {
-        if (err?.code === 11000) {
-            const likeCount = await PostLike.countDocuments({ postId: req.params.postId });
-            return res.status(200).json({ liked: true, likeCount });
-        }
-        return res.status(500).json({ message: err?.message || 'Server error' });
+    if (existing) {
+      await existing.deleteOne();
+      liked = false;
+    } else {
+      await PostLike.create({ postId, subscriberId: userId });
+      liked = true;
     }
-};
 
+    const likeCount = await PostLike.countDocuments({ postId });
+    res.set('Cache-Control', 'no-store');
+
+    return res.status(200).json({ liked, likeCount });
+  } catch (err) {
+    if (err?.code === 11000) {
+      const likeCount = await PostLike.countDocuments({ postId: req.params.postId });
+      return res.status(200).json({ liked: true, likeCount });
+    }
+    return res.status(500).json({ message: err?.message || 'Server error' });
+  }
+};
 
 
 

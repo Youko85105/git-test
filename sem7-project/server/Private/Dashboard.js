@@ -231,8 +231,8 @@ export const upgradeToCreator = async (req, res) => {
 
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccount.id,
-      refresh_url: `${process.env.REQ_ORIGIN}/onboarding-retry`,
-      return_url: `${process.env.REQ_ORIGIN}/creator-dashboard`,
+      refresh_url: `${process.env.REQ_ORIGIN}/dashboard`,
+      return_url: `${process.env.REQ_ORIGIN}/login?upgraded=1`,
       type: "account_onboarding",
     });
 

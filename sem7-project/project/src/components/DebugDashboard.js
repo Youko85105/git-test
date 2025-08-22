@@ -27,7 +27,7 @@ const DebugDashboard = ({ isDarkMode }) => {
 
     const testApiEndpoints = async (token) => {
         const tests = [];
-        const baseUrl = 'http://localhost:5001/api';
+        const baseUrl = 'http://localhost:3002/api';
 
         // Test 1: Public endpoint (no auth)
         try {
@@ -196,7 +196,7 @@ const DebugDashboard = ({ isDarkMode }) => {
                             🔐 Go to Login
                         </a>
                         <a
-                            href="http://localhost:5001"
+                            href="http://localhost:3002"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors inline-block"
@@ -211,8 +211,8 @@ const DebugDashboard = ({ isDarkMode }) => {
                     <h2 className="text-xl font-semibold mb-4">Environment Info</h2>
                     <div className="text-sm space-y-2">
                         <div><strong>Frontend URL:</strong> {window.location.origin}</div>
-                        <div><strong>Backend URL:</strong> http://localhost:5001</div>
-                        <div><strong>API Base:</strong> http://localhost:5001/api</div>
+                        <div><strong>Backend URL:</strong> http://localhost:3002</div>
+                        <div><strong>API Base:</strong> http://localhost:3002/api</div>
                         <div><strong>Current Path:</strong> {window.location.pathname}</div>
                     </div>
                 </div>

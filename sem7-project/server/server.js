@@ -15,6 +15,8 @@ import authRoutes from './Controller/AuthController.js';
 import { stripeWebhookHandler } from './Util/StripeHandler.js';  // Named import
 import protectedResRoutes from './Controller/PrivateResController.js';
 import publicResRoutes from './Controller/PublicResController.js';
+import { createAdminUser } from './createAdmin.js';
+import analyticsRoutes from "./routes/analytics.routes.js";
 
 // Middleware
 import authMiddleware from './middleware/AuthMiddleware.js';  // Correct path to your authMiddleware
@@ -41,7 +43,10 @@ app.use(cookieParser());
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => console.log('MongoDB connected'))
+}).then(async () => {
+  console.log('MongoDB connected');
+  await createAdminUser();   // <-- just add this
+})
   .catch(err => console.error('MongoDB connection error:', err));
 
 // ✅ Routes
@@ -50,6 +55,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/private', protectedResRoutes);
 app.use('/api/public', publicResRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // ✅ Start server
 app.listen(PORT, () => {

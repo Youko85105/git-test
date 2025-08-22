@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getCreatorPosts } from '../services/posts';
+import { getCreatorPosts, getMyPosts } from '../services/posts';
+import { useAuth } from '../AuthContext';
 import Navbar from './Navbar';
 import PostCard from "./PostCard";
 
@@ -65,6 +66,7 @@ const BackHomeLink = ({ isDarkMode }) => (
 const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
 
   const [creator, setCreator] = useState(null);
   const [creatorLoading, setCreatorLoading] = useState(true);
@@ -73,6 +75,10 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
   const [posts, setPosts] = useState([]);
   const [postsLoading, setPostsLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const creatorId = String(creator?._id || creator?.id || id || "");
+  const viewerId  = String(user?._id || user?.id || "");
+  const isOwner   = Boolean(creatorId && viewerId && creatorId === viewerId);
+
 
   // // UI state (local only for now)
   // const [openComments, setOpenComments] = useState({});     // { [postId]: boolean }
@@ -83,7 +89,7 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
     let alive = true;
     setCreatorLoading(true);
 
-    fetch(`http://localhost:5001/api/public/creator/${id}`)
+    fetch(`http://localhost:3002/api/public/creator/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch creator');
         return res.json();
@@ -99,22 +105,27 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
     let alive = true;
     setPostsLoading(true);
 
-    getCreatorPosts(id)
+     if (!creatorId || authLoading) { setPostsLoading(false); return; }
+     const fetcher = isOwner ? getMyPosts : () => getCreatorPosts(creatorId);
+
+      fetcher()
       .then(data => {
         if (!alive) return;
-        setIsSubscribed(true);
-        setPosts(Array.isArray(data) ? data : (data?.posts || []));
+        // both endpoints often return { posts: [...] } — support both shapes
+        const list = Array.isArray(data) ? data : (data?.posts || []);
+        setPosts(list);
+        setIsSubscribed(true);            // owner or subscribed viewer
       })
       .catch(() => {
         if (!alive) return;
-        // Any failure (e.g., 401) => treat as not subscribed
+        // Only non-owners should ever land here
         setIsSubscribed(false);
         setPosts([]);
       })
       .finally(() => { if (alive) setPostsLoading(false); });
 
     return () => { alive = false; };
-  }, [id]);
+  }, [creatorId, isOwner, authLoading]);
 
   // useEffect(() => {
   //   setOpenComments({});
@@ -170,7 +181,7 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
       }
 
       // ⚠️ Use the EXACT path your server exposes (match your Postman tab)
-      const res = await fetch(`http://localhost:5001/api/private/subscribe/${id}`, {
+      const res = await fetch(`http://localhost:3002/api/private/subscribe/${id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -212,6 +223,7 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
   const handle = creator?.handle ? `@${creator.handle}` : '';
   const bio = creator?.bio || creator?.description || '';
   const postCount = Array.isArray(posts) ? posts.length : 0;
+  const canViewPosts = isOwner || isSubscribed;
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
@@ -257,7 +269,7 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
 
                     <div className="flex-1" />
 
-                    {!isSubscribed ? (
+                    {!canViewPosts ? (
                       <button
                         onClick={handleSubscribe}
                         className="px-4 py-2 rounded-lg font-medium bg-blue-600 hover:bg-blue-700 text-white transition shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
@@ -282,7 +294,7 @@ const CreatorProfile = ({ isDarkMode, toggleTheme }) => {
 
           {postsLoading ? (
             <div className="text-center opacity-70">Loading posts…</div>
-          ) : isSubscribed ? (
+          ) : canViewPosts ? (
             posts.length ? (
               <div className="space-y-6">
                 {posts.map((post) => {

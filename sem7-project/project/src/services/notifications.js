@@ -1,7 +1,7 @@
 // src/services/notifications.js
 import axios from "axios";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5001/api";
+const API = process.env.REACT_APP_API_URL || "http://localhost:3002/api";
 
 /**
  * GET /api/notifications

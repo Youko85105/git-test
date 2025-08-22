@@ -73,7 +73,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
       } catch {
         // Fallback: your old local endpoint
         try {
-          const urlFallback = 'http://localhost:5001/api/public/creator/all';
+          const urlFallback = 'http://localhost:3002/api/public/creator/all';
           const res = await fetch(urlFallback);
           if (!res.ok) throw new Error('Failed to fetch creators');
           const data = await res.json();
@@ -240,15 +240,15 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
       </div>
 
       {/* Community Discussion */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* <div className="max-w-4xl mx-auto px-4 py-8">
         <div className={`rounded-lg shadow-lg p-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Community Discussion</h2>
           <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
             Share your thoughts about our healthcare platform and connect with other users.
-          </p>
+          </p> */}
 
           {/* ✅ If logged out, show CTA instead of error */}
-          {!isLoggedIn && (
+          {/* {!isLoggedIn && (
             <div className="text-sm opacity-80">
               Please <Link to="/login" className="text-blue-600 underline">log in</Link> to view and discuss posts.
             </div>
@@ -272,7 +272,7 @@ const Homepage = ({ isDarkMode, toggleTheme }) => {  // ✅ remove isLoggedIn, l
             </div>
           )}
         </div>
-      </div>
+      </div> */}
 
 
       <Footer isDarkMode={isDarkMode} />

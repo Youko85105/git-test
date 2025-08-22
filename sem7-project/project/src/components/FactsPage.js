@@ -9,7 +9,7 @@ const FactsPage = ({ isDarkMode, toggleTheme }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:5001/api/public/creator/all')
+    fetch('http://localhost:3002/api/public/creator/all')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch creators');
         return res.json();

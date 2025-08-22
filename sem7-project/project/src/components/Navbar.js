@@ -82,12 +82,6 @@ const Navbar = ({ isDarkMode, toggleTheme }) => {
                 About
               </Link>
               <Link
-                to="/subscriptions"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`}
-              >
-                Subscriptions
-              </Link>
-              <Link
                 to="/contact"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-300 ${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-700' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'}`}
               >

@@ -88,7 +88,7 @@ const CreatePost = ({ isDarkMode, toggleTheme }) => {
             });
 
             const token = localStorage.getItem('token');
-            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+            const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
             const response = await fetch(`${API_URL}/private/post`, {
                 method: 'POST',

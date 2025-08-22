@@ -2,7 +2,7 @@
 import { makeRequest } from './api';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3002/api';
 
 // Get dashboard data based on user role
 export const getDashboardData = async () => {

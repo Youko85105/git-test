@@ -20,6 +20,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import SubscribeSuccess from "./components/SubscribeSuccess";
 import ForgotPassword from "./components/ForgotPassword";
 import ResetPassword from "./components/ResetPassword";
+import EditPost from './components/EditPost';
+import UpgradeToCreatorPage from './components/UpgradeToCreatorPage';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -52,6 +54,8 @@ function App() {
           <Route path="/chatbot" element={<Chatbot isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/dashboard" element={<Dashboard isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
           <Route path="/debug" element={<DebugDashboard isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+          <Route path="/edit-post/:postId" element={<EditPost isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+          
           <Route
             path="/cancel"
             element={
@@ -72,6 +76,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/upgrade-to-creator"
+  element={
+    <ProtectedRoute>
+      <UpgradeToCreatorPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+    </ProtectedRoute>
+  }
+/>
           <Route
             path="/notifications"
             element={

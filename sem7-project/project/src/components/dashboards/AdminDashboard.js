@@ -3,8 +3,13 @@ import { getAllCreators } from '../../services/dashboard';
 import StatCard from './components/StatCard';
 import PlatformChart from './components/PlatformChart';
 import UserTable from './components/UserTable';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../AuthContext';            // ⬅️ unified auth
 
 const AdminDashboard = ({ isDarkMode }) => {
+    // ⬅️ read unified auth
+    const { user, isLoggedIn, loading: authLoading, logout } = useAuth();
+    const navigate = useNavigate();
     const [platformStats, setPlatformStats] = useState({
         totalUsers: 0,
         totalCreators: 0,
@@ -17,7 +22,18 @@ const AdminDashboard = ({ isDarkMode }) => {
     const [recentActivity, setRecentActivity] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // ⬅️ route guard: only admins
     useEffect(() => {
+        if (authLoading) return;
+        if (!isLoggedIn || user?.role !== 'admin') {
+            navigate('/'); // or '/login'
+        }
+    }, [authLoading, isLoggedIn, user, navigate]);
+
+    useEffect(() => {
+        if (authLoading) return;                 // wait for auth resolved
+        if (!isLoggedIn || user?.role !== 'admin') return; // extra safety
+
         const fetchAdminData = async () => {
             try {
                 setLoading(true);
@@ -68,7 +84,7 @@ const AdminDashboard = ({ isDarkMode }) => {
         };
 
         fetchAdminData();
-    }, []);
+    }, [authLoading, isLoggedIn, user]);
 
     if (loading) {
         return (
@@ -86,7 +102,7 @@ const AdminDashboard = ({ isDarkMode }) => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto px-4 pb-8 pt-[84px]">
             {/* Admin Header */}
             <div className="mb-8 flex items-center justify-between">
                 <div>
@@ -101,16 +117,18 @@ const AdminDashboard = ({ isDarkMode }) => {
                     <div className={`px-3 py-1 rounded-full text-xs font-medium ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
                         System Status: Healthy
                     </div>
-                    <button
+                    {/* <button
                         onClick={() => {
+                            logout();                                // unified logout
+                            // optional one-time cleanup while migrating:
                             localStorage.removeItem('adminToken');
                             localStorage.removeItem('adminUser');
-                            window.location.href = '/';
+                            navigate('/');
                         }}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
                     >
-                        Logout Admin
-                    </button>
+                        Logout
+                    </button> */}
                 </div>
             </div>
 

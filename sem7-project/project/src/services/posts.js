@@ -53,6 +53,25 @@ export async function togglePostLike(postId) {
   return res.json();
 }
 
+export async function deletePost(postId) {
+  const token = localStorage.getItem("token") || "";
+  const res = await fetch(
+    `http://localhost:3002/api/private/post/${postId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    }
+  );
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || "Failed to delete post");
+  }
+  return res.json(); // should return { message, post }
+}
+
 
 /** ---- Backward-compat shims so old imports don't break ---- */
 export const getPost = getPostDetail;  // old name -> new route

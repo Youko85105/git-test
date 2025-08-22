@@ -99,13 +99,27 @@ const ReaderDashboard = ({ isDarkMode, user, dashboardData }) => {
                     isDarkMode={isDarkMode}
                     highlight={stats.unreadNotifications > 0}
                 />
-                <StatCard
+                <Link
+  to="/upgrade-to-creator"
+  className="block rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+>
+  <StatCard
+    title="Upgrade"
+    value="🚀"
+    icon="⭐"
+    trend="Become a Creator →"
+    isDarkMode={isDarkMode}
+    highlight
+  />
+</Link>
+
+                {/* <StatCard
                     title="Saved Posts"
                     value="12"
                     icon="🔖"
                     trend="+3 this week"
                     isDarkMode={isDarkMode}
-                />
+                /> */}
             </div>
 
             {/* Main Content Grid */}
@@ -159,7 +173,7 @@ const ReaderDashboard = ({ isDarkMode, user, dashboardData }) => {
                 {/* Sidebar */}
                 <div className="space-y-6">
                     {/* Recent Activity */}
-                    <ActivityCard
+                    {/* <ActivityCard
                         title="Recent Activity"
                         activities={[
                             { action: "New post from TechGuru", time: "2 hours ago", icon: "📝" },
@@ -168,7 +182,7 @@ const ReaderDashboard = ({ isDarkMode, user, dashboardData }) => {
                             { action: "Subscription renewed", time: "3 days ago", icon: "🔄" }
                         ]}
                         isDarkMode={isDarkMode}
-                    />
+                    /> */}
 
                     {/* Quick Actions */}
                     <div className={`rounded-xl border shadow-sm ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-6`}>

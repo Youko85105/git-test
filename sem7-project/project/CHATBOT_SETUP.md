@@ -32,7 +32,7 @@ REACT_APP_MISTRAL_MODEL=your-finetuned-nexora-model-id
 REACT_APP_USE_MOCK_BOT=false
 
 # Your existing API URL
-REACT_APP_API_URL=http://localhost:5001/api
+REACT_APP_API_URL=http://localhost:3002/api
 ```
 
 ## 🔑 Getting Your Mistral API Key

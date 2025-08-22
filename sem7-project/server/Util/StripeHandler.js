@@ -4,6 +4,7 @@ import { Creator } from "../models/Creator.js";
 import Base from "../models/Base.js";
 import Subscription from "../models/Subscription.js";
 import { notify } from "../services/notifications.js";
+import SubscriptionInvoice from "../models/SubscriptionInvoice.js"; // <-- add at top of file
 
 dotenv.config();
 
@@ -66,6 +67,19 @@ export const stripeWebhookHandler = async (req, res) => {
       //creator.subscribers.push(user._id);
       creator.earnings += total * 0.0085;
       await creator.save();
+      // ...inside checkout.session.completed:
+try {
+  await SubscriptionInvoice.create({
+    creatorId:   creator._id,
+    subscriberId:user._id,
+    amount:      session.amount_total ?? 0, // cents
+    currency:    (session.currency || "usd").toLowerCase(),
+    paidAt:      new Date(),
+    stripeId:    session.id,                // helps dedupe if needed
+  });
+} catch (e) {
+  console.warn("Invoice write failed (non-blocking):", e?.message);
+}
 
       try {
         await notify({
@@ -180,7 +194,7 @@ export const retryStripeOnboarding = async (req, res) => {
     const accountLink = await stripe.accountLinks.create({
       account: creator.payoutInfo,
       refresh_url: `${process.env.REQ_ORIGIN}/onboarding-retry`,
-      return_url: `${process.env.REQ_ORIGIN}/creator-dashboard`,
+      return_url: `${process.env.REQ_ORIGIN}/login?upgraded=1`,
       type: "account_onboarding",
     });
 
@@ -256,7 +270,7 @@ export const handleExistingCreator = async (creator, res) => {
     const accountLink = await stripe.accountLinks.create({
       account: creator.payoutInfo,
       refresh_url: `${process.env.CLIENT_URL}/onboarding-retry`,
-      return_url: `${process.env.CLIENT_URL}/creator-dashboard`,
+      return_url: `${process.env.CLIENT_URL}/login?upgraded=1`,
       type: "account_onboarding",
     });
 

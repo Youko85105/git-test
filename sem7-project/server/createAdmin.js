@@ -1,60 +1,51 @@
-import mongoose from 'mongoose';
 import { hash } from 'bcryptjs';
-import dotenv from 'dotenv';
-import './models/Base.js';
-import './models/User.js';
+import mongoose from 'mongoose';
 import Base from './models/Base.js';
+import User from './models/User.js'; // ensures discriminators are registered
 
-dotenv.config();
+// If you later add: const Admin = Base.discriminator('admin', new mongoose.Schema({ username: { type: String, required: true } }));
+// this code will automatically use it.
+export async function createAdminUser() {
+  try {
+    console.log('👑 Ensuring admin exists...');
 
-async function createAdminUser() {
-    try {
-        console.log('👑 Creating admin user...');
+    // 1) Check if an admin already exists (by role/email)
+    const existing = await Base.findOne({
+      $or: [{ role: 'admin' }, { email: 'admin@subhub.com' }]
+    }).lean();
 
-        await mongoose.connect(process.env.MONGO_URI);
-        console.log('✅ Connected to MongoDB');
-
-        // Check if admin already exists
-        const existingAdmin = await Base.findOne({
-            $or: [
-                { email: 'admin@subhub.com' },
-                { username: 'admin' }
-            ]
-        });
-
-        if (existingAdmin) {
-            console.log('⚠️ Admin user already exists:');
-            console.log(`Email: ${existingAdmin.email}, Username: ${existingAdmin.username}, Role: ${existingAdmin.role}`);
-            mongoose.connection.close();
-            return;
-        }
-
-        // Create admin user
-        const hashedPassword = await hash('admin123', 10);
-
-        const adminUser = new Base({
-            email: 'admin@subhub.com',
-            password: hashedPassword,
-            username: 'admin',
-            role: 'admin'
-        });
-
-        await adminUser.save();
-        console.log('🎉 Admin user created successfully!');
-        console.log('\n📋 Admin Login Credentials:');
-        console.log('Email: admin@subhub.com');
-        console.log('Username: admin');
-        console.log('Password: admin123');
-        console.log('Role: admin');
-        console.log('\n💡 You can now login to admin dashboard at /dashboard');
-
-        mongoose.connection.close();
-        console.log('\n🔒 Connection closed');
-
-    } catch (error) {
-        console.error('❌ Error creating admin user:', error);
-        process.exit(1);
+    if (existing) {
+      console.log(`⚠️ Admin already exists (role: ${existing.role || 'n/a'}, email: ${existing.email})`);
+      return;
     }
-}
 
-createAdminUser();
+    const hashed = await hash('admin123', 10);
+
+    // 2) Prefer an Admin discriminator if defined; otherwise fall back to Base
+    //    Mongoose exposes discriminators on Base.discriminators if they were registered.
+    const AdminModel = Base.discriminators?.admin;
+
+    if (AdminModel) {
+      // ✅ Best path: Admin has username (since Admin schema can define it)
+      await new AdminModel({
+        email: 'admin@subhub.com',
+        password: hashed,
+        username: 'admin',  // requires Admin schema to define this
+        // role will be set to 'admin' automatically by the discriminator
+      }).save();
+      console.log('🎉 Admin (with username) created via Admin discriminator');
+    } else {
+      // ⚠️ Fallback: Base doesn’t have `username`, so it will be admin with only email/password
+      await new Base({
+        email: 'admin@subhub.com',
+        password: hashed,
+        role: 'admin', // discriminatorKey field is allowed on Base
+      }).save();
+      console.log('🎉 Admin created via Base (no username field on Base)');
+    }
+
+    console.log('📧 email: admin@subhub.com\n🔐 password: admin123\n🧩 role: admin');
+  } catch (err) {
+    console.error('❌ Failed to create admin:', err);
+  }
+}
