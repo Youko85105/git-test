@@ -9,6 +9,29 @@ const UpgradeToCreatorPage = ({ isDarkMode, user }) => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const CATEGORIES = [
+  "Art",
+  "Music",
+  "Coding",
+  "Language",
+  "Fitness",
+  "Education",
+  "Gaming",
+  "Writing",
+  "Photography",
+  "Cooking",
+  "Travel",
+  "Film & Animation",
+  "Fashion",
+  "Beauty",
+  "DIY & Crafts",
+  "Spirituality",
+  "Business",
+  "Finance",
+  "Science & Tech",
+  "Other"
+];
+
   // if already creator, bounce to creator dashboard
   useEffect(() => {
     if (user?.role === "creator") navigate("/creator-dashboard", { replace: true });
@@ -56,17 +79,29 @@ const UpgradeToCreatorPage = ({ isDarkMode, user }) => {
 
         <form onSubmit={onSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm mb-1">Category</label>
-            <input
-              name="category"
-              value={form.category}
-              onChange={onChange}
-              placeholder="e.g. Art, Coding, Music"
-              className={`w-full px-3 py-2 rounded-lg border outline-none ${
-                isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"
-              }`}
-            />
-          </div>
+  <label className="block text-sm mb-2 font-medium">Category</label>
+  <div className="grid grid-cols-2 gap-2">
+    {CATEGORIES.map((cat) => (
+      <label
+        key={cat}
+        className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer ${
+          isDarkMode ? "bg-gray-800 border-gray-700" : "bg-gray-100 border-gray-300"
+        } ${form.category === cat ? "ring-2 ring-indigo-500" : ""}`}
+      >
+        <input
+          type="radio"
+          name="category"
+          value={cat}
+          checked={form.category === cat}
+          onChange={onChange}
+          className="accent-indigo-600"
+        />
+        <span>{cat}</span>
+      </label>
+    ))}
+  </div>
+</div>
+
 
           <div>
             <label className="block text-sm mb-1">Monthly Fee (USD)</label>

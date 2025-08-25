@@ -3,7 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
-
+import {runPayoutJob} from './Util/CronHandler.js';
 import dotenv from 'dotenv';
 import './models/Base.js';
 import './models/User.js'; // ✅ force registration of the discriminator
@@ -60,4 +60,5 @@ app.use("/api/analytics", analyticsRoutes);
 // ✅ Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  runPayoutJob();
 });

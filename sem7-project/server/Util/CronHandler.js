@@ -1,11 +1,11 @@
-
+console.log("This file run");
 import cron from "node-cron";
 import Subscription from "../models/Subscription.js";
 import dotenv from "dotenv";
 import Stripe from "stripe";
 import {Creator} from "../models/Creator.js";
 
-cron.schedule("0 0 * * *", async() => {
+cron.schedule("* * * * *", async() => {
     console.log("Running daily subscription expiration check");
 
     const now = new Date();
@@ -43,15 +43,15 @@ cron.schedule("0 0 * * *", async() => {
 dotenv.config();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-//export const runPayoutJob=   
-cron.schedule("0 0 * * *", 
+export const runPayoutJob=   
+//cron.schedule("0 0 * * *", 
     async()=>{
     console.log("Running payout cron:",new Date().toISOString());
 
     try {
         const creators = await Creator.find({
             earnings : {$gt: 0},
-            stripeAccountId: {$exists: true},
+            payoutInfo: {$exists: true},
         });
 
         for (const creator of creators) {
@@ -61,10 +61,10 @@ cron.schedule("0 0 * * *",
             await stripe.transfers.create({
                 amount: payout,
                 currency: "usd",
-                destination: creator.stripeAccountId,
+                destination: creator.payoutInfo,
             });
 
-            console.log(`Transferred $${payout/100} to ${creator.stripeAccountId} named ${creator.username}`);
+            console.log(`Transferred $${payout/100} to ${creator.payoutInfo} named ${creator.username}`);
             creator.earnings = 0;
             await creator.save();
         }
@@ -73,4 +73,4 @@ cron.schedule("0 0 * * *",
         console.error("Payout cron failed:",error.message);
     }
 }
-);
+//);

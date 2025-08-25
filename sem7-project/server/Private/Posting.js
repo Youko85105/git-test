@@ -8,11 +8,31 @@ import Comment from "../models/comment.model.js";
 import Like from "../models/like.model.js";
 import { notify } from "../services/notifications.js";
 
+function exceedsContentLimits(str, { maxWords = 30, maxChars = 200 } = {}) {
+  const s = (str || "").trim();
+  const words = (s.match(/\S+/g) || []).length;   // whitespace-delimited “words”
+  const chars = [...s].length;                    // unicode-safe char count
+  return { tooManyWords: words > maxWords, tooManyChars: chars > maxChars, words, chars };
+}
+
 export const createPost = async (req, res) => {
     checkAuthorization(req, res);
 
     const actorId = req.user.id;            // creator
     const postData = { ...req.body, author: new mongoose.Types.ObjectId(actorId) };
+
+    // after postData is created, BEFORE attachments/auth logic
+const t = exceedsContentLimits(postData.title);
+const b = exceedsContentLimits(postData.body);
+
+if (t.tooManyWords || t.tooManyChars || b.tooManyWords || b.tooManyChars) {
+  return res.status(400).json({
+    message: "Title/body exceeds limits",
+    limits: { maxWords: 30, maxChars: 200 },
+    title: { words: t.words, chars: t.chars },
+    body:  { words: b.words, chars: b.chars }
+  });
+}
 
     postData.attachments = postData.attachments || [];
     if (Array.isArray(req.files)) postData.attachments = req.attachments || [];
@@ -177,6 +197,28 @@ export const editPost = async (req, res) => {
   const postId = req.params.postId;
 
   const editData = { ...req.body };
+
+  // right after: const editData = { ...req.body };
+if (editData.title) {
+  const t = exceedsContentLimits(editData.title);
+  if (t.tooManyWords || t.tooManyChars) {
+    return res.status(400).json({
+      message: "Title exceeds limits",
+      limits: { maxWords: 30, maxChars: 200 },
+      title: { words: t.words, chars: t.chars }
+    });
+  }
+}
+if (editData.body) {
+  const b = exceedsContentLimits(editData.body);
+  if (b.tooManyWords || b.tooManyChars) {
+    return res.status(400).json({
+      message: "Body exceeds limits",
+      limits: { maxWords: 30, maxChars: 200 },
+      body: { words: b.words, chars: b.chars }
+    });
+  }
+}
 
   // Parse incoming JSON fields if present
   let keptExisting = [];
